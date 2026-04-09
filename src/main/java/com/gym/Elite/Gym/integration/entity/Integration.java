@@ -29,6 +29,9 @@ public class Integration {
 
     private Boolean connected;
 
+    private String authType; // OAUTH, API_KEY
+    private String status;   // CONNECTED, FAILED, PENDING
+
     @Column(columnDefinition = "TEXT")
     private String configJson; // encrypted API keys, tokens
 
