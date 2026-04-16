@@ -9,6 +9,7 @@ import com.gym.Elite.Gym.attendanceEvent.repo.SessionBookingRepo;
 import com.gym.Elite.Gym.attendanceEvent.repo.SessionRepo;
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
 import com.gym.Elite.Gym.auth.entity.Member;
+import com.gym.Elite.Gym.integration.client.IntegrationClient;
 import com.gym.Elite.Gym.auth.repo.MemberRepo;
 import com.gym.Elite.Gym.tenants.entity.Tenants;
 import com.gym.Elite.Gym.tenants.repo.TenantRepo;
@@ -34,6 +35,7 @@ public class SessionService {
     private final SessionBookingRepo sessionBookingRepo;
     private final TenantRepo tenantRepo;
     private final MemberRepo memberRepo;
+    private final IntegrationClient integrationClient;
 
     public List<TodaySessionDTO> getTodaySchedule() {
 
@@ -174,6 +176,9 @@ public class SessionService {
                 .build();
 
         sessionBookingRepo.save(booking);
+
+        // 🚀 Trigger event
+        integrationClient.sendEvent("BOOKING_CREATED", session.getTenant().getId().toString(), booking);
 
         return ResponseDto.builder().code(200).message("Session Booked successfully").build();
     }
