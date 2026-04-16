@@ -4,6 +4,7 @@ import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
 import com.gym.Elite.Gym.auth.entity.Member;
 import com.gym.Elite.Gym.auth.repo.MemberRepo;
 import com.gym.Elite.Gym.auth.service.SubscriptionService;
+import com.gym.Elite.Gym.integration.client.IntegrationClient;
 import com.gym.Elite.Gym.payment.dto.PaymentRequestDTO;
 import com.gym.Elite.Gym.payment.dto.PaymentResponseDTO;
 import com.gym.Elite.Gym.payment.entity.Payment;
@@ -32,6 +33,7 @@ public class PaymentService {
     private final MemberRepo memberRepo;
     private final PaymentMapper paymentMapper;
     private final SubscriptionService subscriptionService;
+    private final IntegrationClient integrationClient;
 
     public ResponseDto createPayment(PaymentRequestDTO request) {
 
@@ -73,6 +75,9 @@ public class PaymentService {
 
         // 🔥 CORE: Trigger subscription logic
         handleSubscriptionAfterPayment(savedPayment);
+
+        // 🚀 Trigger event
+        integrationClient.sendEvent("PAYMENT_INITIATED", request.getTenantId().toString(), savedPayment);
 
         return ResponseDto.builder().code(201).message("Payment Record Created Successfully").build();
     }

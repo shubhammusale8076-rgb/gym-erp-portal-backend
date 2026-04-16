@@ -6,6 +6,7 @@ import com.gym.Elite.Gym.auth.dto.memberDto.MemberResponseDTO;
 import com.gym.Elite.Gym.auth.entity.Member;
 import com.gym.Elite.Gym.auth.mapper.MemberMapper;
 import com.gym.Elite.Gym.auth.repo.MemberRepo;
+import com.gym.Elite.Gym.integration.client.IntegrationClient;
 import com.gym.Elite.Gym.tenants.entity.Tenants;
 import com.gym.Elite.Gym.tenants.repo.TenantRepo;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class MemberService {
     private final TenantRepo tenantRepo;
     private final MemberMapper memberMapper;
     private final PasswordEncoder passwordEncoder;
+    private final IntegrationClient integrationClient;
 
     public ResponseDto createMember(UUID tenantId, MemberRequestDTO request) {
 
@@ -48,6 +50,9 @@ public class MemberService {
                 .build();
 
         memberRepo.save(member);
+
+        // 🚀 Trigger event
+        integrationClient.sendEvent("MEMBERSHIP_CREATED", tenantId.toString(), member);
 
         return ResponseDto.builder().code(201).message("Member ").build();
     }
