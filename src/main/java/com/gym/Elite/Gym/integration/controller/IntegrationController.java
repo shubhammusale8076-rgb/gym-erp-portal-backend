@@ -1,4 +1,4 @@
-package com.gym.Elite.Gym.integration.config;
+package com.gym.Elite.Gym.integration.controller;
 
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
 import com.gym.Elite.Gym.integration.dto.IntegrationRequest;

@@ -18,7 +18,12 @@ public class IntegrationClient {
 
     @Async
     public void sendEvent(String eventType, String tenantId, Object payload) {
-        log.info("Sending event: {} for tenant: {}", eventType, tenantId);
+        if (integrationServiceUrl == null || integrationServiceUrl.isEmpty()) {
+            log.warn("Integration service URL is not configured. Skipping event: {}", eventType);
+            return;
+        }
+
+        log.info("Attempting to send event: {} for tenantId: {}", eventType, tenantId);
 
         EventRequest request = EventRequest.builder()
                 .eventType(eventType)
@@ -28,9 +33,9 @@ public class IntegrationClient {
 
         try {
             restTemplate.postForEntity(integrationServiceUrl, request, String.class);
-            log.info("Event {} sent successfully", eventType);
+            log.info("Successfully sent event: {} for tenantId: {}", eventType, tenantId);
         } catch (Exception e) {
-            log.error("Failed to send event {}: {}", eventType, e.getMessage());
+            log.error("Failed to send event: {} for tenantId: {}. Error: {}", eventType, tenantId, e.getMessage());
         }
     }
 }
