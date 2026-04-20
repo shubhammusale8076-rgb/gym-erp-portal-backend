@@ -46,11 +46,13 @@ public class MembershipPlan {
     @JsonIgnore
     private Tenants tenant;
 
+    @Builder.Default
     @ElementCollection
     @CollectionTable(name = "membership_plan_features", joinColumns = @JoinColumn(name = "plan_id"))
     @Column(name = "feature")
     private List<String> features = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "plan" , cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberSubscription> subscriptions = new ArrayList<>();
 

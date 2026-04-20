@@ -15,7 +15,7 @@ public class TenantMapper {
                 .email(tenant.getEmail())
                 .phoneNumber(tenant.getPhoneNumber())
                 .plan(tenant.getPlan())
-                .status(tenant.getStatus())
+                .status(tenant.isStatus()) // Changed from getStatus() to isStatus() for boolean
                 .createdOn(tenant.getCreatedOn())
                 .build();
     }

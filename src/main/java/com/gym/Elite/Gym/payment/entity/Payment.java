@@ -23,26 +23,27 @@ public class Payment {
     @GeneratedValue
     private UUID id;
 
-    private String transactionReference; // TRX-88291
+    private String transactionReference;
 
     private Double subtotal;
     private Double taxAmount;
     private Double discountAmount;
     private Double totalAmount;
 
-    private String currency; // INR
+    private String currency;
 
-    private String status; // PAID, FAILED, PENDING
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus status;
 
-    private String paymentMethod; // CARD, UPI, CASH
+    private String paymentMethod;
 
-    private String cardLast4; // 4242
+    private String cardLast4;
 
     private Date paymentDate;
 
     private UUID planId;
 
-    private UUID subscriptionId; // nullable (for renewals)
+    private UUID subscriptionId;
 
     @ManyToOne
     @JoinColumn(name = "member_id")
@@ -54,6 +55,7 @@ public class Payment {
     @JsonIgnore
     private Tenants tenant;
 
+    @Builder.Default
     @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PaymentItem> items = new ArrayList<>();
 }

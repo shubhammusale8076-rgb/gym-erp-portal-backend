@@ -32,10 +32,12 @@ public class WebSecurityConfig {
     private final UsersDetailService userDetailsService;
 
     private static final String[] PUBLIC_APIS= {
-            "/api/auth/**",
+            "/api/auth/login",
+            "/api/auth/register",
             "/v3/api-docs/**",
             "/swagger-ui.html",
-            "/swagger-ui/**"
+            "/swagger-ui/**",
+            "/api/webhooks/**"
 
     };
 
@@ -47,6 +49,7 @@ public class WebSecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((authorize)-> authorize
                         .requestMatchers(PUBLIC_APIS).permitAll()
+                        .requestMatchers("/api/auth/addrole", "/api/auth/get-roles").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(new JWTAuthenticationFilter(
                         jwtTokenHelper,

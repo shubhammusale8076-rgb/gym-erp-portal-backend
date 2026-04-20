@@ -2,10 +2,11 @@ package com.gym.Elite.Gym.attendanceEvent.controller;
 
 import com.gym.Elite.Gym.attendanceEvent.dto.CreateSessionDTO;
 import com.gym.Elite.Gym.attendanceEvent.dto.SessionBookingDTO;
-import com.gym.Elite.Gym.attendanceEvent.dto.TodaySessionDTO;
+import com.gym.Elite.Gym.attendanceEvent.entity.Session;
 import com.gym.Elite.Gym.attendanceEvent.service.SessionService;
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,45 +20,33 @@ public class SessionController {
 
     private final SessionService sessionService;
 
-
-    @GetMapping("/today-schedule")
-    public ResponseEntity<List<TodaySessionDTO>> getTodaySchedule() {
-
-        return ResponseEntity.ok(sessionService.getTodaySchedule());
+    @GetMapping("/today")
+    public ResponseEntity<List<Session>> getTodaySchedule() {
+        return new ResponseEntity<>(sessionService.getTodaySchedule(), HttpStatus.OK);
     }
 
-    @PostMapping("/create-session")
+    @PostMapping("/create")
     public ResponseEntity<ResponseDto> createSession(@RequestBody CreateSessionDTO dto) {
-        return ResponseEntity.ok(sessionService.createSession(dto));
+        return new ResponseEntity<>(sessionService.createSession(dto), HttpStatus.CREATED);
     }
 
-    @PutMapping("/update-session/{id}")
-    public ResponseEntity<ResponseDto> updateSession(@PathVariable UUID id, @RequestBody CreateSessionDTO dto) {
-
-        return ResponseEntity.ok(sessionService.updateSession(id, dto));
+    @PutMapping("/{sessionId}")
+    public ResponseEntity<ResponseDto> updateSession(@PathVariable UUID sessionId, @RequestBody CreateSessionDTO dto) {
+        return new ResponseEntity<>(sessionService.updateSession(sessionId, dto), HttpStatus.OK);
     }
 
-    @DeleteMapping("/delete-session/{id}")
-    public ResponseEntity<ResponseDto> deleteSession(@PathVariable UUID id) {
-
-        ResponseDto responseDto =  sessionService.deleteSession(id);
-        return ResponseEntity.ok(responseDto);
+    @DeleteMapping("/{sessionId}")
+    public ResponseEntity<ResponseDto> deleteSession(@PathVariable UUID sessionId) {
+        return new ResponseEntity<>(sessionService.deleteSession(sessionId), HttpStatus.OK);
     }
 
-    @PostMapping("/{id}/book")
-    public ResponseEntity<ResponseDto> bookSession(@PathVariable UUID id, @RequestBody SessionBookingDTO dto) {
-
-        ResponseDto responseDto = sessionService.bookSession(id, dto.getMemberId());
-        return ResponseEntity.ok(responseDto);
+    @PostMapping("/book")
+    public ResponseEntity<ResponseDto> bookSession(@RequestBody SessionBookingDTO dto) {
+        return new ResponseEntity<>(sessionService.bookSession(dto), HttpStatus.CREATED);
     }
 
-    @DeleteMapping("/{id}/cancel-booking/member/{memberId}")
-    public ResponseEntity<ResponseDto> cancelBooking(
-            @PathVariable UUID id,
-            @PathVariable UUID memberId) {
-
-        ResponseDto responseDto =  sessionService.cancelBooking(id, memberId);
-        return ResponseEntity.ok(responseDto);
-
+    @DeleteMapping("/book/{sessionId}/{memberId}")
+    public ResponseEntity<ResponseDto> cancelBooking(@PathVariable UUID sessionId, @PathVariable UUID memberId) {
+        return new ResponseEntity<>(sessionService.cancelBooking(sessionId, memberId), HttpStatus.OK);
     }
 }

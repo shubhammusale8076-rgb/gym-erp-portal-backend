@@ -6,6 +6,7 @@ import com.gym.Elite.Gym.auth.dto.subscriptionDto.SubscriptionResponseDTO;
 import com.gym.Elite.Gym.auth.entity.Member;
 import com.gym.Elite.Gym.auth.entity.MemberSubscription;
 import com.gym.Elite.Gym.auth.entity.MembershipPlan;
+import com.gym.Elite.Gym.auth.entity.SubscriptionStatus;
 import com.gym.Elite.Gym.auth.mapper.SubscriptionPlanMapper;
 import com.gym.Elite.Gym.auth.repo.MemberRepo;
 import com.gym.Elite.Gym.auth.repo.MembershipPlanRepo;
@@ -49,7 +50,7 @@ public class SubscriptionService {
                 .active(true)
                 .autoRenew(request.getAutoRenew())
                 .remainingSessions(plan.getSessionLimit())
-                .status("ACTIVE")
+                .status(SubscriptionStatus.ACTIVE)
                 .createdOn(new Date())
                 .build();
 
@@ -73,7 +74,7 @@ public class SubscriptionService {
                 .plan(plan)
                 .startDate(startDate)
                 .endDate(endDate)
-                .status("ACTIVE")
+                .status(SubscriptionStatus.ACTIVE)
                 .active(true)
                 .autoRenew(false)
                 .remainingSessions(plan.getSessionLimit())
@@ -99,19 +100,16 @@ public class SubscriptionService {
         Date today = new Date();
         Date startDate;
 
-        // 🔥 KEY LOGIC
         if (sub.getEndDate().after(today)) {
-            // active → extend
             startDate = sub.getEndDate();
         } else {
-            // expired → restart
             startDate = today;
         }
         Date newEnd = calculateEndDate(startDate, sub.getPlan().getDurationInDays());
 
         sub.setStartDate(startDate);
         sub.setEndDate(newEnd);
-        sub.setStatus("ACTIVE");
+        sub.setStatus(SubscriptionStatus.ACTIVE);
         sub.setActive(true);
         sub.setUpdatedOn(new Date());
 
@@ -125,15 +123,11 @@ public class SubscriptionService {
         MemberSubscription sub = getEntity(subscriptionId);
 
         Date today = new Date();
-
         Date startDate;
 
-        // 🔥 KEY LOGIC
         if (sub.getEndDate().after(today)) {
-            // active → extend
             startDate = sub.getEndDate();
         } else {
-            // expired → restart
             startDate = today;
         }
 
@@ -144,7 +138,7 @@ public class SubscriptionService {
 
         sub.setStartDate(startDate);
         sub.setEndDate(newEndDate);
-        sub.setStatus("ACTIVE");
+        sub.setStatus(SubscriptionStatus.ACTIVE);
         sub.setActive(true);
         sub.setPayment(payment);
         sub.setUpdatedOn(new Date());
@@ -156,7 +150,7 @@ public class SubscriptionService {
     public ResponseDto cancelSubscription(UUID subscriptionId) {
         MemberSubscription sub = getEntity(subscriptionId);
 
-        sub.setStatus("CANCELLED");
+        sub.setStatus(SubscriptionStatus.CANCELLED);
         sub.setActive(false);
         sub.setUpdatedOn(new Date());
 
