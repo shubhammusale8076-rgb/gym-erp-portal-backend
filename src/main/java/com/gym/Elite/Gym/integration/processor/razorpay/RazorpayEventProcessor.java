@@ -3,7 +3,6 @@ package com.gym.Elite.Gym.integration.processor.razorpay;
 import com.gym.Elite.Gym.integration.entity.WebhookEvent;
 import com.gym.Elite.Gym.integration.processor.EventProcessor;
 import com.gym.Elite.Gym.payment.entity.Payment;
-import com.gym.Elite.Gym.payment.entity.PaymentStatus;
 import com.gym.Elite.Gym.payment.entity.ProcessedWebhook;
 import com.gym.Elite.Gym.payment.repo.PaymentRepo;
 import com.gym.Elite.Gym.payment.repo.ProcessedWebhookRepo;
