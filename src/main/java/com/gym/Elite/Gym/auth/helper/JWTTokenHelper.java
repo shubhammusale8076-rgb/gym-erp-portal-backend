@@ -5,30 +5,19 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import java.security.Key;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 @Component
 public class JWTTokenHelper {
 
-    private String secretKey = " ";
-
-    public JWTTokenHelper() {
-        try {
-            KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
-            SecretKey key = keyGenerator.generateKey();
-            secretKey= Base64.getEncoder().encodeToString(key.getEncoded());
-
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    @Value("${app.jwt.secret}")
+    private String secretKey;
 
     public String generateToken(String userName, UUID tenantId){
 

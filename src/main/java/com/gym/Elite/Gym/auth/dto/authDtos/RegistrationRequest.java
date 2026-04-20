@@ -16,5 +16,6 @@ public class RegistrationRequest {
     private CharSequence password;
     private String phoneNumber;
     private String authorityCode;
+    private java.util.UUID tenantId;
 
 }

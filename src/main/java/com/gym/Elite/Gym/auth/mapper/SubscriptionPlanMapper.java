@@ -10,15 +10,12 @@ public class SubscriptionPlanMapper {
     public SubscriptionResponseDTO mapToSubscriptionDTO(MemberSubscription sub) {
         return SubscriptionResponseDTO.builder()
                 .id(sub.getId())
-                .memberName(sub.getMember().getFullName())
                 .planName(sub.getPlan().getName())
                 .startDate(sub.getStartDate())
                 .endDate(sub.getEndDate())
+                .status(sub.getStatus() != null ? sub.getStatus().name() : null)
                 .active(sub.getActive())
-                .status(sub.getStatus())
-                .autoRenew(sub.getAutoRenew())
+                .remainingSessions(sub.getRemainingSessions())
                 .build();
     }
-
-
 }

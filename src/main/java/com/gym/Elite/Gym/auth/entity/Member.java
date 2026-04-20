@@ -50,9 +50,11 @@ public class Member {
     @JsonIgnore
     private Tenants tenant;
 
+    @Builder.Default
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberSubscription> subscriptions = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Payment> payments= new ArrayList<>();
 

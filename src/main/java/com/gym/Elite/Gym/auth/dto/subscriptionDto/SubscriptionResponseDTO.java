@@ -18,4 +18,5 @@ public class SubscriptionResponseDTO {
     private Boolean active;
     private String status;
     private Boolean autoRenew;
+    private Integer remainingSessions;
 }

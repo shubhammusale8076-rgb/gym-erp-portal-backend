@@ -1,13 +1,9 @@
 package com.gym.Elite.Gym.tenants.entity;
 
-
-import com.gym.Elite.Gym.auth.entity.Member;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gym.Elite.Gym.auth.entity.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -30,24 +26,23 @@ public class Tenants {
 
     private String ownerName;
 
-    @Column(unique = true)
     private String email;
 
     private String phoneNumber;
 
-    private String plan;
+    private String address;
 
-    private Boolean status;
+    private String plan; // BASIC, PREMIUM, ENTERPRISE
+
+    private boolean status;
 
     private Date createdOn;
 
-    @OneToMany(mappedBy = "tenant", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<User> users  = new ArrayList<>();
+    private Date updatedOn;
 
+    @Builder.Default
     @OneToMany(mappedBy = "tenant", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Member> members  = new ArrayList<>();
-
-//    @OneToMany(mappedBy = "tenant")
-//    private List<Lead> leads;
+    @JsonIgnore
+    private List<User> users = new ArrayList<>();
 
 }

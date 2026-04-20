@@ -4,16 +4,19 @@ import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
 import com.gym.Elite.Gym.auth.entity.Member;
 import com.gym.Elite.Gym.auth.repo.MemberRepo;
 import com.gym.Elite.Gym.auth.service.SubscriptionService;
-import com.gym.Elite.Gym.integration.client.IntegrationClient;
+import com.gym.Elite.Gym.integration.client.EventPublisher;
 import com.gym.Elite.Gym.payment.dto.PaymentRequestDTO;
 import com.gym.Elite.Gym.payment.dto.PaymentResponseDTO;
 import com.gym.Elite.Gym.payment.entity.Payment;
 import com.gym.Elite.Gym.payment.entity.PaymentItem;
+import com.gym.Elite.Gym.payment.entity.PaymentStatus;
 import com.gym.Elite.Gym.payment.mapper.PaymentMapper;
 import com.gym.Elite.Gym.payment.repo.PaymentRepo;
 import com.gym.Elite.Gym.tenants.entity.Tenants;
 import com.gym.Elite.Gym.tenants.repo.TenantRepo;
+import com.gym.Elite.Gym.utility.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class PaymentService {
 
     private final PaymentRepo paymentRepo;
@@ -33,14 +37,20 @@ public class PaymentService {
     private final MemberRepo memberRepo;
     private final PaymentMapper paymentMapper;
     private final SubscriptionService subscriptionService;
-    private final IntegrationClient integrationClient;
+    private final EventPublisher eventPublisher;
 
     public ResponseDto createPayment(PaymentRequestDTO request) {
+
+        UUID currentTenantId = SecurityUtils.getCurrentTenantId();
 
         Member member = memberRepo.findById(request.getMemberId())
                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
-        Tenants tenant = tenantRepo.findById(request.getTenantId())
+        if (!member.getTenant().getId().equals(currentTenantId)) {
+            throw new RuntimeException("Member does not belong to your tenant");
+        }
+
+        Tenants tenant = tenantRepo.findById(currentTenantId)
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
         Payment payment = Payment.builder()
@@ -52,7 +62,7 @@ public class PaymentService {
                 .currency(request.getCurrency())
                 .paymentMethod(request.getPaymentMethod())
                 .cardLast4(request.getCardLast4())
-                .status("PAID")
+                .status(PaymentStatus.PENDING)
                 .paymentDate(new Date())
                 .member(member)
                 .tenant(tenant)
@@ -73,20 +83,51 @@ public class PaymentService {
 
         Payment savedPayment = paymentRepo.save(payment);
 
-        // 🔥 CORE: Trigger subscription logic
-        handleSubscriptionAfterPayment(savedPayment);
+        eventPublisher.publish("PAYMENT_INITIATED", currentTenantId.toString(), savedPayment);
 
-        // 🚀 Trigger event
-        integrationClient.sendEvent("PAYMENT_INITIATED", request.getTenantId().toString(), savedPayment);
+        return ResponseDto.builder()
+                .code(201)
+                .message("Payment Record Created Successfully")
+                .id(savedPayment.getId())
+                .build();
+    }
 
-        return ResponseDto.builder().code(201).message("Payment Record Created Successfully").build();
+    public void confirmPayment(UUID paymentId, String transactionReference) {
+        Payment payment = getEntity(paymentId);
+
+        if (PaymentStatus.SUCCESS.equals(payment.getStatus())) {
+            log.info("Payment {} already confirmed", paymentId);
+            return;
+        }
+
+        payment.setStatus(PaymentStatus.SUCCESS);
+        payment.setTransactionReference(transactionReference);
+        payment.setPaymentDate(new Date());
+        paymentRepo.save(payment);
+
+        handleSubscriptionAfterPayment(payment);
+
+        eventPublisher.publish("PAYMENT_SUCCESS", payment.getTenant().getId().toString(), payment);
     }
 
     public PaymentResponseDTO getPaymentById(UUID paymentId) {
-        return paymentMapper.mapToPaymentDTO(getEntity(paymentId));
+        Payment payment = getEntity(paymentId);
+        UUID currentTenantId = SecurityUtils.getCurrentTenantId();
+        if (!payment.getTenant().getId().equals(currentTenantId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+        return paymentMapper.mapToPaymentDTO(payment);
     }
 
     public List<PaymentResponseDTO> getPaymentsByMember(UUID memberId) {
+        Member member = memberRepo.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("Member not found"));
+
+        UUID currentTenantId = SecurityUtils.getCurrentTenantId();
+        if (!member.getTenant().getId().equals(currentTenantId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
         return paymentRepo.findByMemberId(memberId)
                 .stream()
                 .map(paymentMapper::mapToPaymentDTO)
@@ -103,19 +144,13 @@ public class PaymentService {
     }
 
     private void handleSubscriptionAfterPayment(Payment payment) {
-
-        // 🔁 CASE 1: Renewal
         if (payment.getSubscriptionId() != null) {
-
-            ResponseDto responseDto = subscriptionService.renewSubscriptionWithPayment(
+            subscriptionService.renewSubscriptionWithPayment(
                     payment.getSubscriptionId(),
                     payment
             );
-
         } else {
-            // 🆕 CASE 2: New Subscription
-
-            ResponseDto responseDto =  subscriptionService.createSubscriptionFromPayment(
+            subscriptionService.createSubscriptionFromPayment(
                     payment.getMember().getId(),
                     payment.getPlanId(),
                     payment

@@ -6,9 +6,10 @@ import com.gym.Elite.Gym.auth.dto.memberDto.MemberResponseDTO;
 import com.gym.Elite.Gym.auth.entity.Member;
 import com.gym.Elite.Gym.auth.mapper.MemberMapper;
 import com.gym.Elite.Gym.auth.repo.MemberRepo;
-import com.gym.Elite.Gym.integration.client.IntegrationClient;
+import com.gym.Elite.Gym.integration.client.EventPublisher;
 import com.gym.Elite.Gym.tenants.entity.Tenants;
 import com.gym.Elite.Gym.tenants.repo.TenantRepo;
+import com.gym.Elite.Gym.utility.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class MemberService {
     private final TenantRepo tenantRepo;
     private final MemberMapper memberMapper;
     private final PasswordEncoder passwordEncoder;
-    private final IntegrationClient integrationClient;
+    private final EventPublisher eventPublisher;
 
     public ResponseDto createMember(UUID tenantId, MemberRequestDTO request) {
 
@@ -51,17 +52,29 @@ public class MemberService {
 
         memberRepo.save(member);
 
-        // 🚀 Trigger event
-        integrationClient.sendEvent("MEMBERSHIP_CREATED", tenantId.toString(), member);
+        // 🚀 Trigger event via EventPublisher
+        eventPublisher.publish("MEMBERSHIP_CREATED", tenantId.toString(), member);
 
-        return ResponseDto.builder().code(201).message("Member ").build();
+        return ResponseDto.builder().code(201).message("Member Created").build();
     }
 
     public MemberResponseDTO getMemberById(UUID memberId) {
-        return memberMapper.mapToDTO(getEntity(memberId));
+        Member member = getEntity(memberId);
+
+        UUID currentTenantId = SecurityUtils.getCurrentTenantId();
+        if (!member.getTenant().getId().equals(currentTenantId)) {
+            throw new RuntimeException("Unauthorized: Member does not belong to this tenant");
+        }
+
+        return memberMapper.mapToDTO(member);
     }
 
     public List<MemberResponseDTO> getMembersByTenant(UUID tenantId) {
+        UUID currentTenantId = SecurityUtils.getCurrentTenantId();
+        if (!tenantId.equals(currentTenantId)) {
+            throw new RuntimeException("Unauthorized: Access denied for this tenant");
+        }
+
         return memberRepo.findByTenantId(tenantId)
                 .stream()
                 .map(memberMapper::mapToDTO)
@@ -71,6 +84,11 @@ public class MemberService {
     public ResponseDto updateMember(UUID memberId, MemberRequestDTO request) {
 
         Member member = getEntity(memberId);
+
+        UUID currentTenantId = SecurityUtils.getCurrentTenantId();
+        if (!member.getTenant().getId().equals(currentTenantId)) {
+            throw new RuntimeException("Unauthorized");
+        }
 
         member.setFullName(request.getFullName());
         member.setPhoneNumber(request.getPhoneNumber());
@@ -83,12 +101,25 @@ public class MemberService {
     }
 
     public ResponseDto deleteMember(UUID memberId) {
-        memberRepo.deleteById(memberId);
+        Member member = getEntity(memberId);
+
+        UUID currentTenantId = SecurityUtils.getCurrentTenantId();
+        if (!member.getTenant().getId().equals(currentTenantId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        memberRepo.delete(member);
         return ResponseDto.builder().code(200).message("Member Deleted Successfully").build();
     }
 
     public ResponseDto activateMember(UUID memberId) {
         Member member = getEntity(memberId);
+
+        UUID currentTenantId = SecurityUtils.getCurrentTenantId();
+        if (!member.getTenant().getId().equals(currentTenantId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
         member.setActive(true);
         memberRepo.save(member);
         return ResponseDto.builder().code(200).message("Member Activated Successfully").build();
@@ -97,6 +128,12 @@ public class MemberService {
 
     public ResponseDto deactivateMember(UUID memberId) {
         Member member = getEntity(memberId);
+
+        UUID currentTenantId = SecurityUtils.getCurrentTenantId();
+        if (!member.getTenant().getId().equals(currentTenantId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
         member.setActive(false);
         memberRepo.save(member);
         return ResponseDto.builder().code(200).message("Member De-Activated Successfully").build();

@@ -36,6 +36,7 @@ public class User implements UserDetails {
 
     private String phoneNumber;
 
+    @Builder.Default
     private boolean enabled = false;
 
     @ManyToOne

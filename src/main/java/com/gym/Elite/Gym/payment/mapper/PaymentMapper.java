@@ -3,6 +3,7 @@ package com.gym.Elite.Gym.payment.mapper;
 import com.gym.Elite.Gym.payment.dto.PaymentItemDTO;
 import com.gym.Elite.Gym.payment.dto.PaymentResponseDTO;
 import com.gym.Elite.Gym.payment.entity.Payment;
+import com.gym.Elite.Gym.payment.entity.PaymentItem;
 import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
@@ -16,18 +17,16 @@ public class PaymentMapper {
                 .transactionReference(payment.getTransactionReference())
                 .totalAmount(payment.getTotalAmount())
                 .currency(payment.getCurrency())
-                .status(payment.getStatus())
-                .paymentMethod(payment.getPaymentMethod())
-                .cardLast4(payment.getCardLast4())
+                .status(payment.getStatus() != null ? payment.getStatus().name() : null)
                 .paymentDate(payment.getPaymentDate())
-                .items(payment.getItems().stream()
-                        .map(i -> {
-                            PaymentItemDTO dto = new PaymentItemDTO();
-                            dto.setName(i.getName());
-                            dto.setDescription(i.getDescription());
-                            dto.setAmount(i.getAmount());
-                            return dto;
-                        }).collect(Collectors.toList()))
+                .items(payment.getItems().stream().map(this::mapToItemDTO).collect(Collectors.toList()))
+                .build();
+    }
+
+    private PaymentItemDTO mapToItemDTO(PaymentItem item) {
+        return PaymentItemDTO.builder()
+                .name(item.getName())
+                .amount(item.getAmount())
                 .build();
     }
 }

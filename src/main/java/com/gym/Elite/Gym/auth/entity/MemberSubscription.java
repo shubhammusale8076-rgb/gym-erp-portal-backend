@@ -9,7 +9,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.util.Date;
 import java.util.UUID;
 
@@ -27,7 +26,10 @@ public class MemberSubscription {
 
     private Date startDate;
     private Date endDate;
-    private String status;
+
+    @Enumerated(EnumType.STRING)
+    private SubscriptionStatus status;
+
     private Boolean active;
     private Boolean autoRenew;
     private Integer remainingSessions;
@@ -53,4 +55,3 @@ public class MemberSubscription {
     @JsonIgnore
     private Tenants tenant;
 }
-
