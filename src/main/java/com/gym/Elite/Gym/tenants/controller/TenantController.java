@@ -1,6 +1,5 @@
 package com.gym.Elite.Gym.tenants.controller;
 
-
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
 import com.gym.Elite.Gym.tenants.dto.TenantDetailsDTO;
 import com.gym.Elite.Gym.tenants.dto.TenantRequestDTO;

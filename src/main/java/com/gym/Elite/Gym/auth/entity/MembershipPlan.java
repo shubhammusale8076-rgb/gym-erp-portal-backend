@@ -46,9 +46,14 @@ public class MembershipPlan {
     @JsonIgnore
     private Tenants tenant;
 
-    @Builder.Default
     @ElementCollection
-    @CollectionTable(name = "membership_plan_features", joinColumns = @JoinColumn(name = "plan_id"))
+    @CollectionTable(
+            name = "membership_plan_features",
+            joinColumns = @JoinColumn(
+                    name = "plan_id",
+                    columnDefinition = "uuid"
+            )
+    )
     @Column(name = "feature")
     private List<String> features = new ArrayList<>();
 
