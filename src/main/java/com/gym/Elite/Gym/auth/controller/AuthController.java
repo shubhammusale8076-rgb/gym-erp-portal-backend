@@ -61,7 +61,7 @@ public class AuthController {
 
             // 5. Generate JWT token
             assert user != null;
-            UUID tenantId = user.getTenant().getId();
+            UUID tenantId = user.getTenantId();
             String token = jwtTokenHelper.generateToken(user.getEmail() , tenantId);
 
             // 6. Return response

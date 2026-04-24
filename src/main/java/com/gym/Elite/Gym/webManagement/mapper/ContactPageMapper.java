@@ -1,6 +1,6 @@
 package com.gym.Elite.Gym.webManagement.mapper;
 
-import com.gym.Elite.Gym.tenants.entity.Tenants;
+
 import com.gym.Elite.Gym.webManagement.dto.contactUsDto.ContactDTO;
 import com.gym.Elite.Gym.webManagement.dto.contactUsDto.ContactPageDTO;
 import com.gym.Elite.Gym.webManagement.dto.contactUsDto.OperatingHoursDto;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
+
 
 @Component
 public class ContactPageMapper {

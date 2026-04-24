@@ -1,9 +1,9 @@
 package com.gym.Elite.Gym.webManagement.entity;
 
-import com.gym.Elite.Gym.tenants.entity.Tenants;
+import com.gym.Elite.Gym.common.entity.TenantAware;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+import lombok.*;
 
 import java.time.LocalTime;
 import java.util.UUID;
@@ -13,31 +13,24 @@ import java.util.UUID;
         name = "operating_hours",
         uniqueConstraints = @UniqueConstraint(columnNames = {"tenant_id", "day_of_week", "status"})
 )
-@Getter
-@Setter
-public class OperatingHours {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class OperatingHours extends TenantAware {
 
     @Id
     @GeneratedValue
     private UUID id;
 
-    // ✅ Multi-tenant mapping
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false)
-    private Tenants tenant;
-
-    // 📅 Day Info
     @Column(name = "day_of_week", nullable = false)
     private String dayOfWeek; // MONDAY, TUESDAY...
 
-    // ⏰ Time
     private LocalTime openTime;
     private LocalTime closeTime;
 
-    // ❌ Closed flag
     private Boolean isClosed;
 
-    // 🧠 CMS Control
     @Column(nullable = false)
     private String status; // DRAFT / PUBLISHED
 }

@@ -1,12 +1,9 @@
 package com.gym.Elite.Gym.webManagement.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
+import com.gym.Elite.Gym.common.entity.TenantAware;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,21 +12,16 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @Table(name = "testimonials")
-public class Testimonial {
+public class Testimonial extends TenantAware {
 
     @Id
     @GeneratedValue
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false)
-    @JsonIgnore
-    private Tenants tenant;
-
     private String clientName;
-    private String role; // e.g. Premium Member
+    private String role;
 
     private String profileImageUrl;
 
@@ -40,11 +32,11 @@ public class Testimonial {
 
     private String source; // OFFLINE / ONLINE / GOOGLE
 
-    private boolean isApproved; // admin approved or not
+    private boolean isApproved;
 
-    private boolean isPublished; // visible on website
+    private boolean isPublished;
 
-    private boolean isFeatured; // highlight on homepage
+    private boolean isFeatured;
 
     private LocalDateTime createdAt;
 

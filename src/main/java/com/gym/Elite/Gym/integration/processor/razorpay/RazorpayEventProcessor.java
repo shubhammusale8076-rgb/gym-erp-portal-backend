@@ -77,6 +77,13 @@ public class RazorpayEventProcessor implements EventProcessor {
             Payment payment = paymentRepo.findById(internalPaymentId)
                     .orElseThrow(() -> new RuntimeException("Payment not found in DB"));
 
+            // 4.1 Tenant Security Check
+            if (!payment.getTenantId().equals(event.getTenantId())) {
+                log.error("Tenant mismatch for payment {}: expected {}, got {}",
+                        internalPaymentId, payment.getTenantId(), event.getTenantId());
+                throw new RuntimeException("Unauthorized payment processing");
+            }
+
             // Verify amount (paise to rupees conversion)
             if (Math.abs(payment.getTotalAmount() * 100 - amount) > 0.01) {
                 log.error("Amount mismatch for payment {}: expected {}, got {}",

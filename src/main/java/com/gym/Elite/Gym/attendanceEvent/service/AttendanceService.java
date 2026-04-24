@@ -12,8 +12,7 @@ import com.gym.Elite.Gym.attendanceEvent.repo.AttendanceRepo;
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
 import com.gym.Elite.Gym.auth.entity.Member;
 import com.gym.Elite.Gym.auth.repo.MemberRepo;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
-import com.gym.Elite.Gym.tenants.repo.TenantRepo;
+import com.gym.Elite.Gym.tenants.repo.TenantRefRepository;
 import com.gym.Elite.Gym.utility.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,7 +31,7 @@ public class AttendanceService {
     private final AttendanceEventRepo eventRepo;
     private final AttendanceRepo attendanceRepo;
     private final MemberRepo memberRepository;
-    private final TenantRepo tenantRepo;
+    private final TenantRefRepository tenantRefRepository;
 
     private static final int SESSION_GAP_MINUTES = 90;
 
@@ -40,35 +39,33 @@ public class AttendanceService {
 
         UUID tenantId = SecurityUtils.getCurrentTenantId();
 
-        Tenants tenant = tenantRepo.findById(tenantId)
+        tenantRefRepository.findById(tenantId)
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
         Member member = memberRepository.findById(dto.getMemberId())
                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
         AttendanceEvent event = AttendanceEvent.builder()
-                .tenant(tenant)
-                 .member(member)
-                .gymId(dto.getGymId())
+                .member(member)
                 .eventTime(dto.getEventTime())
                 .source(dto.getSource())
                 .deviceId(dto.getDeviceId())
                 .processed(false)
                 .createdAt(LocalDateTime.now())
+                .tenantId(tenantId)
                 .build();
-
         eventRepo.save(event);
 
-        processAttendance(tenant, member, dto.getGymId(), dto.getEventTime().toLocalDate());
+        processAttendance(tenantId, member, dto.getEventTime().toLocalDate());
 
         return ResponseDto.builder().code(201).message("Attendance event recorded").build();
     }
 
-    public void processAttendance(Tenants tenant, Member member, String gymId, LocalDate date) {
+    public void processAttendance(UUID tenantId, Member member, LocalDate date) {
 
         List<AttendanceEvent> events =
-                eventRepo.findByTenantAndMember_IdAndEventTimeBetweenOrderByEventTimeAsc(
-                        tenant,
+                eventRepo.findByTenantIdAndMember_IdAndEventTimeBetweenOrderByEventTimeAsc(
+                        tenantId,
                         member.getId(),
                         date.atStartOfDay(),
                         date.atTime(23, 59, 59)
@@ -77,13 +74,15 @@ public class AttendanceService {
         if (events.isEmpty()) return;
 
         Attendance attendance = attendanceRepo
-                .findByTenantAndMember_IdAndDate(tenant, member.getId(), date)
-                .orElseGet(() -> Attendance.builder()
-                        .tenant(tenant)
-                        .member(member)
-                        .gymId(gymId)
-                        .date(date)
-                        .build());
+                .findByTenantIdAndMember_IdAndDate(tenantId, member.getId(), date)
+                .orElseGet(() -> {
+                    Attendance a = Attendance.builder()
+                            .member(member)
+                            .date(date)
+                            .tenantId(tenantId)
+                            .build();
+                    return a;
+                });
 
         // ✅ First event = check-in
         LocalDateTime checkIn = events.get(0).getEventTime();
@@ -129,13 +128,13 @@ public class AttendanceService {
 
         UUID tenantId = SecurityUtils.getCurrentTenantId();
 
-        Tenants tenant = tenantRepo.findById(tenantId)
+        tenantRefRepository.findById(tenantId)
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
         LocalDate today = LocalDate.now();
 
         List<Attendance> records =
-                attendanceRepo.findTodayActiveMembers(tenant, today);
+                attendanceRepo.findTodayActiveMembers(tenantId, today);
 
         return records.stream()
                 .map(a -> ActiveMemberAttendanceDTO.builder()
@@ -152,7 +151,7 @@ public class AttendanceService {
 
         UUID tenantId = SecurityUtils.getCurrentTenantId();
 
-        Tenants tenant = tenantRepo.findById(tenantId)
+        tenantRefRepository.findById(tenantId)
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
         LocalDate startDate;
@@ -172,7 +171,7 @@ public class AttendanceService {
         }
 
         List<Object[]> rawData = attendanceRepo.getAttendanceHeatmap(
-                tenant,
+                tenantId,
                 request.getMemberId(),
                 startDate,
                 endDate

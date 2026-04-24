@@ -10,7 +10,7 @@ import java.util.UUID;
 @Repository
 public interface OperatingHoursRepo extends JpaRepository<OperatingHours, UUID> {
 
-    List<OperatingHours> findByTenant_IdAndStatus(UUID tenantId, String status);
+    List<OperatingHours> findByTenantIdAndStatus(UUID tenantId, String status);
 
-    void deleteByTenant_IdAndStatus(UUID tenantId, String status);
+    void deleteByTenantIdAndStatus(UUID tenantId, String status);
 }

@@ -1,10 +1,9 @@
 package com.gym.Elite.Gym.webManagement.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
+import com.gym.Elite.Gym.common.entity.TenantAware;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -14,21 +13,16 @@ import java.util.UUID;
         name = "contact_info",
         uniqueConstraints = @UniqueConstraint(columnNames = {"tenant_id", "status"})
 )
-@Getter
-@Setter
-public class ContactInfo {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class ContactInfo extends TenantAware {
 
     @Id
     @GeneratedValue
     private UUID id;
 
-    // ✅ Multi-tenant mapping
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false)
-    @JsonIgnore
-    private Tenants tenant;
-
-    // 📞 Public Presence
     private String supportEmail;
     private String phoneNumber;
     private String emergencyContact;
@@ -36,13 +30,11 @@ public class ContactInfo {
     @Column(columnDefinition = "TEXT")
     private String address;
 
-    // 🌐 Social Links
     private String instagram;
     private String twitter;
     private String facebook;
     private String youtube;
 
-    // 🧠 CMS Control
     @Column(nullable = false)
     private String status; // DRAFT / PUBLISHED
 

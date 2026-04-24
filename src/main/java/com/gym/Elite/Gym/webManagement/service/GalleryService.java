@@ -1,8 +1,8 @@
 package com.gym.Elite.Gym.webManagement.service;
 
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
-import com.gym.Elite.Gym.tenants.repo.TenantRepo;
+import com.gym.Elite.Gym.tenants.entity.TenantRef;
+import com.gym.Elite.Gym.tenants.repo.TenantRefRepository;
 import com.gym.Elite.Gym.webManagement.dto.galleryDto.GalleryAssetRequestDTO;
 import com.gym.Elite.Gym.webManagement.dto.galleryDto.GalleryAssetResponseDTO;
 import com.gym.Elite.Gym.webManagement.entity.GalleryAsset;
@@ -23,13 +23,13 @@ import java.util.stream.Collectors;
 public class GalleryService {
 
     private final GalleryAssetRepo repo;
-    private final TenantRepo tenantRepo;
     private final GalleryMapper galleryMapper;
+    private final TenantRefRepository tenantRefRepository;
 
     // ✅ CREATE (after Cloudinary upload)
     public ResponseDto create(UUID tenantId, GalleryAssetRequestDTO dto) {
 
-        Tenants tenant = tenantRepo.findById(tenantId)
+        TenantRef tenant = tenantRefRepository.findById(tenantId)
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
         GalleryAsset asset = GalleryAsset.builder()
@@ -41,7 +41,7 @@ public class GalleryService {
                 .isVisible(Boolean.TRUE.equals(dto.getIsVisible()))
                 .displayOrder(dto.getDisplayOrder())
                 .createdAt(new Date())
-                .tenant(tenant)
+                .tenantId(tenantId)
                 .build();
 
         repo.save(asset);
@@ -54,7 +54,7 @@ public class GalleryService {
 
     // ✅ GET ALL (ADMIN)
     public List<GalleryAssetResponseDTO> getAll(UUID tenantId) {
-        return repo.findByTenant_Id(tenantId)
+        return repo.findByTenantId(tenantId)
                 .stream()
                 .map(galleryMapper::mapToGalleryDTO)
                 .collect(Collectors.toList());
@@ -62,7 +62,7 @@ public class GalleryService {
 
     // ✅ WEBSITE
     public List<GalleryAssetResponseDTO> getVisibleAssets(UUID tenantId) {
-        return repo.findByTenant_IdAndIsVisibleTrueOrderByDisplayOrderAsc(tenantId)
+        return repo.findByTenantIdAndIsVisibleTrueOrderByDisplayOrderAsc(tenantId)
                 .stream()
                 .map(galleryMapper::mapToGalleryDTO)
                 .collect(Collectors.toList());

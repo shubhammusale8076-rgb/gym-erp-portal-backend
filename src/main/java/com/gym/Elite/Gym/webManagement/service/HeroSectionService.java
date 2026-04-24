@@ -1,7 +1,7 @@
 package com.gym.Elite.Gym.webManagement.service;
 
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
+import com.gym.Elite.Gym.tenants.repo.TenantRefRepository;
 import com.gym.Elite.Gym.webManagement.dto.heroDto.HeroDTO;
 import com.gym.Elite.Gym.webManagement.entity.HeroSection;
 import com.gym.Elite.Gym.webManagement.mapper.HeroSectionMapper;
@@ -20,10 +20,11 @@ public class HeroSectionService {
 
     private final HeroSectionRepo heroSectionRepo;
     private final HeroSectionMapper heroSectionMapper;
+    private final TenantRefRepository tenantRefRepository;
 
     public HeroDTO get(UUID tenantId) {
         HeroSection hero = heroSectionRepo
-                .findByTenant_IdAndStatus(tenantId, "PUBLISHED")
+                .findByTenantIdAndStatus(tenantId, "PUBLISHED")
                 .orElseThrow(() -> new RuntimeException("Published hero not found"));
 
 
@@ -31,14 +32,15 @@ public class HeroSectionService {
     }
 
     public ResponseDto saveDraft(UUID tenantId, HeroDTO dto) {
-        HeroSection hero = heroSectionRepo.findByTenant_Id(tenantId)
+        tenantRefRepository.findById(tenantId)
+                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+
+        HeroSection hero = heroSectionRepo.findByTenantId(tenantId)
                 .orElse(new HeroSection());
 
         // ⚠️ IMPORTANT: set tenant only when new
         if (hero.getId() == null) {
-            Tenants tenant = new Tenants();
-            tenant.setId(tenantId);
-            hero.setTenant(tenant);
+            hero.setTenantId(tenantId);
         }
 
         hero.setHeadline(dto.getHeadline());
@@ -56,14 +58,15 @@ public class HeroSectionService {
 
     public ResponseDto publish(UUID tenantId, HeroDTO dto) {
 
-        HeroSection hero = heroSectionRepo.findByTenant_Id(tenantId)
+        tenantRefRepository.findById(tenantId)
+                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+
+        HeroSection hero = heroSectionRepo.findByTenantId(tenantId)
                 .orElseGet(HeroSection::new);
 
         // Set tenant only if new
         if (hero.getId() == null) {
-            Tenants tenant = new Tenants();
-            tenant.setId(tenantId);
-            hero.setTenant(tenant);
+            hero.setTenantId(tenantId);
         }
 
         hero.setHeadline(dto.getHeadline());

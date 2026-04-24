@@ -1,8 +1,6 @@
 package com.gym.Elite.Gym.trainer.service;
 
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
-import com.gym.Elite.Gym.tenants.repo.TenantRepo;
 import com.gym.Elite.Gym.trainer.dto.TrainerRequestDTO;
 import com.gym.Elite.Gym.trainer.dto.TrainerResponseDTO;
 import com.gym.Elite.Gym.trainer.entity.Trainer;
@@ -23,14 +21,10 @@ import java.util.stream.Collectors;
 public class TrainerService {
 
     private final TrainerRepo trainerRepo;
-    private final TenantRepo tenantRepo;
     private final TrainerMapper trainerMapper;
 
     // ✅ CREATE
     public ResponseDto createTrainer(UUID tenantId, TrainerRequestDTO request) {
-
-        Tenants tenant = tenantRepo.findById(tenantId)
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
         Trainer trainer = Trainer.builder()
                 .fullName(request.getFullName())
@@ -62,7 +56,7 @@ public class TrainerService {
                 .active(true)
 
                 .createdOn(new Date())
-                .tenant(tenant)
+                .tenantId(tenantId)
                 .build();
 
         trainerRepo.save(trainer);
@@ -136,7 +130,7 @@ public class TrainerService {
                 .build();
     }
 
-    // ✅ DELETE (Hard delete – you can convert to soft later)
+    // ✅ DELETE
     public ResponseDto deleteTrainer(UUID trainerId) {
         trainerRepo.deleteById(trainerId);
         return ResponseDto.builder()
@@ -160,7 +154,7 @@ public class TrainerService {
         return ResponseDto.builder().code(200).message("Trainer Deactivated").build();
     }
 
-    // ✅ TOGGLE WEBSITE VISIBILITY (🔥 important for CMS)
+    // ✅ TOGGLE WEBSITE VISIBILITY
     public ResponseDto toggleVisibility(UUID trainerId, boolean visible) {
         Trainer trainer = getEntity(trainerId);
         trainer.setVisibleOnWebsite(visible);

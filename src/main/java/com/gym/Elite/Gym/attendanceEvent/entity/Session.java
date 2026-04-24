@@ -1,9 +1,9 @@
 package com.gym.Elite.Gym.attendanceEvent.entity;
 
-import com.gym.Elite.Gym.tenants.entity.Tenants;
+import com.gym.Elite.Gym.common.entity.TenantAware;
 import jakarta.persistence.*;
 import lombok.*;
-
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,36 +12,32 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "sessions")
-@Getter
-@Setter
-@Builder
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Session {
+@SuperBuilder
+public class Session extends TenantAware {
 
     @Id
     @GeneratedValue
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false)
-    private Tenants tenant;
-
-    private String name; // "Power Lifting 101"
+    private String name;
 
     private LocalDate date;
     private LocalTime startTime;
     private LocalTime endTime;
 
-    private String location; // Studio A, Main Floor
+    private String location;
 
     private Integer capacity;
 
     private String trainerName;
 
     @Enumerated(EnumType.STRING)
-    private SessionStatus status; // UPCOMING, ONGOING, COMPLETED
+    private SessionStatus status;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
 }

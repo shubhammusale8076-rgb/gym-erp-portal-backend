@@ -3,8 +3,7 @@ package com.gym.Elite.Gym.payment.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gym.Elite.Gym.integration.entity.WebhookEvent;
 import com.gym.Elite.Gym.integration.processor.razorpay.RazorpayEventProcessor;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
-import com.gym.Elite.Gym.tenants.repo.TenantRepo;
+import com.gym.Elite.Gym.tenants.repo.TenantRefRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +22,7 @@ import java.util.stream.Collectors;
 public class WebhookController {
 
     private final RazorpayEventProcessor razorpayEventProcessor;
-    private final TenantRepo tenantRepo;
+    private final TenantRefRepository tenantRefRepository;
     private final ObjectMapper objectMapper;
 
     @PostMapping("/razorpay/{tenantId}")
@@ -38,13 +37,13 @@ public class WebhookController {
 
             Map<String, Object> payload = objectMapper.readValue(body, Map.class);
 
-            Tenants tenant = tenantRepo.findById(tenantId)
+            tenantRefRepository.findById(tenantId)
                     .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
             WebhookEvent event = new WebhookEvent();
             event.setEventType((String) payload.get("event"));
             event.setPayload(payload.get("payload"));
-            event.setTenant(tenant);
+            event.setTenantId(tenantId);
             event.setSignature(signature);
             event.setProviderEventId((String) payload.get("event_id"));
             event.setRawBody(body);

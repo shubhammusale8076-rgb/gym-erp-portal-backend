@@ -1,12 +1,9 @@
 package com.gym.Elite.Gym.webManagement.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
+import com.gym.Elite.Gym.common.entity.TenantAware;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Date;
 import java.util.UUID;
@@ -15,16 +12,16 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @Table(name = "gallery_assets")
-public class GalleryAsset {
+public class GalleryAsset extends TenantAware {
 
     @Id
     @GeneratedValue
     private UUID id;
 
-    private String imageUrl;   // Cloudinary URL
-    private String publicId;   // Cloudinary public ID
+    private String imageUrl;
+    private String publicId;
 
     private String title;
     private String altText;
@@ -37,7 +34,4 @@ public class GalleryAsset {
     private Date createdAt;
     private Date updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false)
-    private Tenants tenant;
 }

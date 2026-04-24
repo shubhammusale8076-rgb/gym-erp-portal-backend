@@ -10,9 +10,9 @@ import java.util.UUID;
 @Repository
 public interface GalleryAssetRepo extends JpaRepository<GalleryAsset, UUID> {
 
-    List<GalleryAsset> findByTenant_Id(UUID tenantId);
+    List<GalleryAsset> findByTenantId(UUID tenantId);
 
-    List<GalleryAsset> findByTenant_IdAndIsVisibleTrueOrderByDisplayOrderAsc(UUID tenantId);
+    List<GalleryAsset> findByTenantIdAndIsVisibleTrueOrderByDisplayOrderAsc(UUID tenantId);
 
-    List<GalleryAsset> findByTenant_IdAndCategory(UUID tenantId, String category);
+    List<GalleryAsset> findByTenantIdAndCategory(UUID tenantId, String category);
 }

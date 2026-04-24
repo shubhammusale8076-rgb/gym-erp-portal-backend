@@ -9,6 +9,6 @@ import java.util.UUID;
 
 @Repository
 public interface MembershipPlanRepo extends JpaRepository<MembershipPlan, UUID> {
-    Collection<MembershipPlan> findByTenantId(UUID tenantId);
+    Collection<MembershipPlan> findByTenantId(String tenantId);
 
 }

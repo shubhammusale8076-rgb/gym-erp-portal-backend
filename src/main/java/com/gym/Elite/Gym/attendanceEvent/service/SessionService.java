@@ -10,9 +10,8 @@ import com.gym.Elite.Gym.attendanceEvent.repo.SessionRepo;
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
 import com.gym.Elite.Gym.auth.entity.Member;
 import com.gym.Elite.Gym.auth.repo.MemberRepo;
+import com.gym.Elite.Gym.tenants.repo.TenantRefRepository;
 import com.gym.Elite.Gym.integration.client.EventPublisher;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
-import com.gym.Elite.Gym.tenants.repo.TenantRepo;
 import com.gym.Elite.Gym.utility.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,14 +30,14 @@ public class SessionService {
     private final SessionRepo sessionRepo;
     private final SessionBookingRepo bookingRepo;
     private final MemberRepo memberRepo;
-    private final TenantRepo tenantRepo;
+    private final TenantRefRepository tenantRefRepository;
     private final EventPublisher eventPublisher;
 
     public ResponseDto createSession(CreateSessionDTO dto) {
 
         UUID tenantId = SecurityUtils.getCurrentTenantId();
-
-        Tenants tenant = tenantRepo.findById(tenantId)
+        
+        tenantRefRepository.findById(tenantId)
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
         Session session = Session.builder()
@@ -47,7 +46,7 @@ public class SessionService {
                 .startTime(dto.getSessionTime().toLocalTime())
                 .capacity(dto.getCapacity())
                 .status(SessionStatus.UPCOMING)
-                .tenant(tenant)
+                .tenantId(tenantId)
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -60,7 +59,7 @@ public class SessionService {
                 .orElseThrow(() -> new RuntimeException("Session not found"));
 
         UUID tenantId = SecurityUtils.getCurrentTenantId();
-        if (!session.getTenant().getId().equals(tenantId)) {
+        if (!session.getTenantId().equals(tenantId)) {
             throw new RuntimeException("Unauthorized");
         }
 
@@ -79,7 +78,7 @@ public class SessionService {
                 .orElseThrow(() -> new RuntimeException("Session not found"));
 
         UUID tenantId = SecurityUtils.getCurrentTenantId();
-        if (!session.getTenant().getId().equals(tenantId)) {
+        if (!session.getTenantId().equals(tenantId)) {
             throw new RuntimeException("Unauthorized");
         }
 
@@ -115,7 +114,7 @@ public class SessionService {
 
         bookingRepo.save(booking);
 
-        eventPublisher.publish("BOOKING_CREATED", session.getTenant().getId().toString(), booking);
+        eventPublisher.publish("BOOKING_CREATED", session.getTenantId().toString(), booking);
 
         return ResponseDto.builder().code(201).message("Session Booked").build();
     }
@@ -130,9 +129,6 @@ public class SessionService {
 
     public List<Session> getTodaySchedule() {
         UUID tenantId = SecurityUtils.getCurrentTenantId();
-        Tenants tenant = tenantRepo.findById(tenantId)
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
-
-        return sessionRepo.findTodaySessions(tenant, LocalDate.now());
+        return sessionRepo.findTodaySessions(tenantId, LocalDate.now());
     }
 }

@@ -2,7 +2,6 @@ package com.gym.Elite.Gym.auth.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gym.Elite.Gym.payment.entity.Payment;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,6 +35,10 @@ public class MemberSubscription {
     private Date createdOn;
     private Date updatedOn;
 
+    // ✅ Tenant isolation — plain column, no FK constraint
+    @Column(name = "tenant_id", nullable = false)
+    private String tenantId;
+
     @ManyToOne
     @JoinColumn(name = "member_id")
     @JsonIgnore
@@ -49,9 +52,4 @@ public class MemberSubscription {
     @OneToOne
     @JoinColumn(name = "payment_id")
     private Payment payment;
-
-    @ManyToOne
-    @JoinColumn(name = "tenant_id")
-    @JsonIgnore
-    private Tenants tenant;
 }

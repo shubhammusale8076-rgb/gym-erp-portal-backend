@@ -1,13 +1,7 @@
 package com.gym.Elite.Gym.auth.entity;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,24 +35,19 @@ public class MembershipPlan {
 
     private Boolean active;
 
-    @ManyToOne
-    @JoinColumn(name = "tenant_id")
-    @JsonIgnore
-    private Tenants tenant;
+    // ✅ Multi-tenant: plain column, no FK constraint
+    @Column(name = "tenant_id", nullable = false)
+    private String tenantId;
 
     @ElementCollection
     @CollectionTable(
             name = "membership_plan_features",
-            joinColumns = @JoinColumn(
-                    name = "plan_id",
-                    columnDefinition = "uuid"
-            )
+            joinColumns = @JoinColumn(name = "plan_id", columnDefinition = "uuid")
     )
     @Column(name = "feature")
     private List<String> features = new ArrayList<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "plan" , cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberSubscription> subscriptions = new ArrayList<>();
-
 }

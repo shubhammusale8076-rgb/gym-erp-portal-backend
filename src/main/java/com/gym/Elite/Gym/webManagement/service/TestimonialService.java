@@ -2,8 +2,7 @@ package com.gym.Elite.Gym.webManagement.service;
 
 
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
-import com.gym.Elite.Gym.tenants.repo.TenantRepo;
+import com.gym.Elite.Gym.tenants.repo.TenantRefRepository;
 import com.gym.Elite.Gym.utility.SecurityUtils;
 import com.gym.Elite.Gym.webManagement.dto.testimonialDTO.TestimonialDTO;
 import com.gym.Elite.Gym.webManagement.dto.testimonialDTO.TestimonialResponseDTO;
@@ -25,19 +24,18 @@ import java.util.stream.Collectors;
 public class TestimonialService {
 
     private final TestimonialRepo repo;
-    private final TenantRepo tenantRepo;
     private final TestimonialMapper testimonialMapper;
+    private final TenantRefRepository tenantRefRepository;
 
     public ResponseDto create(TestimonialDTO dto) {
 
         UUID tenantId = SecurityUtils.getCurrentTenantId();
 
-        Tenants tenant = tenantRepo.findById(tenantId)
+        tenantRefRepository.findById(tenantId)
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
         Testimonial t = new Testimonial();
-
-        t.setTenant(tenant);
+        t.setTenantId(tenantId);
         t.setClientName(dto.getClientName());
         t.setRole(dto.getRole());
         t.setProfileImageUrl(dto.getProfileImageUrl());
@@ -60,7 +58,7 @@ public class TestimonialService {
     public List<TestimonialResponseDTO> getAll() {
         UUID tenantId = SecurityUtils.getCurrentTenantId();
 
-        return repo.findByTenant_Id(tenantId)
+        return repo.findByTenantId(tenantId)
                 .stream()
                 .map(testimonialMapper::mapToResponse)
                 .collect(Collectors.toList());
@@ -105,7 +103,7 @@ public class TestimonialService {
     public List<TestimonialResponseDTO> getPublishedTestimonials() {
         UUID tenantId = SecurityUtils.getCurrentTenantId();
 
-        return repo.findByTenant_IdAndIsPublishedTrueAndIsApprovedTrue(tenantId)
+        return repo.findByTenantIdAndIsPublishedTrueAndIsApprovedTrue(tenantId)
                 .stream()
                 .map(testimonialMapper::mapToResponse)
                 .collect(Collectors.toList());

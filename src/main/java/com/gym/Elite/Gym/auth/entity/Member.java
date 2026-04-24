@@ -1,14 +1,11 @@
 package com.gym.Elite.Gym.auth.entity;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gym.Elite.Gym.payment.entity.Payment;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
+import com.gym.Elite.Gym.common.entity.TenantAware;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -19,9 +16,9 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@Table(name = "members")
-public class Member {
+@SuperBuilder
+@Table(name = "gym_members")
+public class Member extends TenantAware {
 
     @Id
     @GeneratedValue
@@ -36,7 +33,7 @@ public class Member {
 
     private Date updatedOn;
 
-    @Column(nullable = false,unique = true)
+    @Column(nullable = false, unique = true)
     private String email;
 
     private String phoneNumber;
@@ -45,17 +42,14 @@ public class Member {
 
     private String emergencyContact;
 
-    @ManyToOne
-    @JoinColumn(name = "tenant_id")
-    @JsonIgnore
-    private Tenants tenant;
 
     @Builder.Default
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<MemberSubscription> subscriptions = new ArrayList<>();
 
     @Builder.Default
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Payment> payments= new ArrayList<>();
-
+    @JsonIgnore
+    private List<Payment> payments = new ArrayList<>();
 }

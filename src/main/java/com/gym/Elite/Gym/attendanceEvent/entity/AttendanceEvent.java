@@ -2,12 +2,10 @@ package com.gym.Elite.Gym.attendanceEvent.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gym.Elite.Gym.auth.entity.Member;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
+import com.gym.Elite.Gym.common.entity.TenantAware;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -16,25 +14,19 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @Table(name = "attendance_events")
-public class AttendanceEvent {
+public class AttendanceEvent extends TenantAware {
 
     @Id
     @GeneratedValue
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false)
-    @JsonIgnore
-    private Tenants tenant;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     @JsonIgnore
     private Member member;
 
-    private String gymId; // ID of the specific gym branch
 
     private LocalDateTime eventTime;
 
@@ -46,4 +38,5 @@ public class AttendanceEvent {
     private boolean processed = false;
 
     private LocalDateTime createdAt;
+
 }

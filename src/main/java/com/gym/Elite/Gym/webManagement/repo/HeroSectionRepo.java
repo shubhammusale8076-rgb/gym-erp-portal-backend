@@ -10,6 +10,6 @@ import java.util.UUID;
 @Repository
 public interface HeroSectionRepo extends JpaRepository<HeroSection, UUID> {
 
-    Optional<HeroSection> findByTenant_Id(UUID tenantId);
-    Optional<HeroSection> findByTenant_IdAndStatus(UUID tenantId, String status);
+    Optional<HeroSection> findByTenantId(UUID tenantId);
+    Optional<HeroSection> findByTenantIdAndStatus(UUID tenantId, String status);
 }

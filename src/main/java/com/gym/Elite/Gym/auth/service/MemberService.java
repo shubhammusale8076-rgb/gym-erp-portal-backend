@@ -7,8 +7,6 @@ import com.gym.Elite.Gym.auth.entity.Member;
 import com.gym.Elite.Gym.auth.mapper.MemberMapper;
 import com.gym.Elite.Gym.auth.repo.MemberRepo;
 import com.gym.Elite.Gym.integration.client.EventPublisher;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
-import com.gym.Elite.Gym.tenants.repo.TenantRepo;
 import com.gym.Elite.Gym.utility.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,7 +24,6 @@ import java.util.stream.Collectors;
 public class MemberService {
 
     private final MemberRepo memberRepo;
-    private final TenantRepo tenantRepo;
     private final MemberMapper memberMapper;
     private final PasswordEncoder passwordEncoder;
     private final EventPublisher eventPublisher;
@@ -37,9 +34,6 @@ public class MemberService {
             throw new RuntimeException("Member with this email already exists");
         }
 
-        Tenants tenant = tenantRepo.findById(tenantId)
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
-
         Member member = Member.builder()
                 .fullName(request.getFullName())
                 .email(request.getEmail())
@@ -47,7 +41,7 @@ public class MemberService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .createdOn(new Date())
                 .active(true)
-                .tenant(tenant)
+                .tenantId(tenantId)
                 .build();
 
         memberRepo.save(member);
@@ -62,7 +56,7 @@ public class MemberService {
         Member member = getEntity(memberId);
 
         UUID currentTenantId = SecurityUtils.getCurrentTenantId();
-        if (!member.getTenant().getId().equals(currentTenantId)) {
+        if (!currentTenantId.equals(member.getTenantId())) {
             throw new RuntimeException("Unauthorized: Member does not belong to this tenant");
         }
 
@@ -86,7 +80,7 @@ public class MemberService {
         Member member = getEntity(memberId);
 
         UUID currentTenantId = SecurityUtils.getCurrentTenantId();
-        if (!member.getTenant().getId().equals(currentTenantId)) {
+        if (!currentTenantId.equals(member.getTenantId())) {
             throw new RuntimeException("Unauthorized");
         }
 
@@ -104,7 +98,7 @@ public class MemberService {
         Member member = getEntity(memberId);
 
         UUID currentTenantId = SecurityUtils.getCurrentTenantId();
-        if (!member.getTenant().getId().equals(currentTenantId)) {
+        if (!currentTenantId.equals(member.getTenantId())) {
             throw new RuntimeException("Unauthorized");
         }
 
@@ -116,21 +110,20 @@ public class MemberService {
         Member member = getEntity(memberId);
 
         UUID currentTenantId = SecurityUtils.getCurrentTenantId();
-        if (!member.getTenant().getId().equals(currentTenantId)) {
+        if (!currentTenantId.equals(member.getTenantId())) {
             throw new RuntimeException("Unauthorized");
         }
 
         member.setActive(true);
         memberRepo.save(member);
         return ResponseDto.builder().code(200).message("Member Activated Successfully").build();
-
     }
 
     public ResponseDto deactivateMember(UUID memberId) {
         Member member = getEntity(memberId);
 
         UUID currentTenantId = SecurityUtils.getCurrentTenantId();
-        if (!member.getTenant().getId().equals(currentTenantId)) {
+        if (!currentTenantId.equals(member.getTenantId())) {
             throw new RuntimeException("Unauthorized");
         }
 

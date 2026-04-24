@@ -1,7 +1,6 @@
 package com.gym.Elite.Gym.tenants.mapper;
 
 import com.gym.Elite.Gym.tenants.dto.TenantDetailsDTO;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
 import org.springframework.stereotype.Component;
 
 @Component

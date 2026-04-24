@@ -1,8 +1,8 @@
 package com.gym.Elite.Gym.webManagement.service;
 
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
+import com.gym.Elite.Gym.tenants.repo.TenantRefRepository;
 import com.gym.Elite.Gym.config.ResourceNotFoundException;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
 import com.gym.Elite.Gym.utility.SecurityUtils;
 import com.gym.Elite.Gym.webManagement.dto.contactUsDto.ContactPageDTO;
 import com.gym.Elite.Gym.webManagement.dto.contactUsDto.OperatingHoursDto;
@@ -27,17 +27,18 @@ public class ContactService {
     private final ContactInfoRepo contactRepo;
     private final OperatingHoursRepo hoursRepo;
     private final ContactPageMapper mapper;
+    private final TenantRefRepository tenantRefRepository;
 
     // ✅ GET PUBLISHED
     public ContactPageDTO getPublished() {
         UUID tenantId = SecurityUtils.getCurrentTenantId();
 
         ContactInfo contact = contactRepo
-                .findByTenant_IdAndStatus(tenantId, "PUBLISHED")
+                .findByTenantIdAndStatus(tenantId, "PUBLISHED")
                 .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
 
         List<OperatingHours> hours = hoursRepo
-                .findByTenant_IdAndStatus(tenantId, "PUBLISHED");
+                .findByTenantIdAndStatus(tenantId, "PUBLISHED");
 
         return mapper.mapToContactDTO(contact, hours);
     }
@@ -47,11 +48,11 @@ public class ContactService {
         UUID tenantId = SecurityUtils.getCurrentTenantId();
 
         ContactInfo contact = contactRepo
-                .findByTenant_IdAndStatus(tenantId, "DRAFT")
+                .findByTenantIdAndStatus(tenantId, "DRAFT")
                 .orElse(null);
 
         List<OperatingHours> hours = hoursRepo
-                .findByTenant_IdAndStatus(tenantId, "DRAFT");
+                .findByTenantIdAndStatus(tenantId, "DRAFT");
 
         return mapper.mapToContactDTO(contact, hours);
     }
@@ -60,8 +61,11 @@ public class ContactService {
     public ResponseDto saveDraft(ContactPageDTO dto) {
         UUID tenantId = SecurityUtils.getCurrentTenantId();
 
+        tenantRefRepository.findById(tenantId)
+                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+
         ContactInfo contact = contactRepo
-                .findByTenant_IdAndStatus(tenantId, "DRAFT")
+                .findByTenantIdAndStatus(tenantId, "DRAFT")
                 .orElseGet(() -> createContact(tenantId));
 
         mapper.mapContact(contact, dto.getContact());
@@ -79,8 +83,11 @@ public class ContactService {
     public ResponseDto publish(ContactPageDTO dto) {
         UUID tenantId = SecurityUtils.getCurrentTenantId();
 
+        tenantRefRepository.findById(tenantId)
+                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+
         ContactInfo contact = contactRepo
-                .findByTenant_IdAndStatus(tenantId, "PUBLISHED")
+                .findByTenantIdAndStatus(tenantId, "PUBLISHED")
                 .orElseGet(() -> createContact(tenantId));
 
         mapper.mapContact(contact, dto.getContact());
@@ -95,28 +102,21 @@ public class ContactService {
 
     private ContactInfo createContact(UUID tenantId) {
         ContactInfo contact = new ContactInfo();
-
-        Tenants tenant = new Tenants();
-        tenant.setId(tenantId);
-
-        contact.setTenant(tenant);
+        contact.setTenantId(tenantId);
         return contact;
     }
 
     private void saveOperatingHours(List<OperatingHoursDto> list, UUID tenantId, String status) {
 
         // remove old
-        hoursRepo.deleteByTenant_IdAndStatus(tenantId, status);
+        hoursRepo.deleteByTenantIdAndStatus(tenantId, status);
 
         if (list == null || list.isEmpty()) return;
 
         List<OperatingHours> entities = list.stream().map(dto -> {
 
             OperatingHours oh = new OperatingHours();
-
-            Tenants tenant = new Tenants();
-            tenant.setId(tenantId);
-            oh.setTenant(tenant);
+            oh.setTenantId(tenantId);
 
             oh.setDayOfWeek(dto.getDayOfWeek());
 

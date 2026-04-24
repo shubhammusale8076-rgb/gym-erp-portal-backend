@@ -6,8 +6,6 @@ import com.gym.Elite.Gym.auth.dto.membershipPlanDto.MembershipPlanResponseDTO;
 import com.gym.Elite.Gym.auth.entity.MembershipPlan;
 import com.gym.Elite.Gym.auth.mapper.MemberShipMapper;
 import com.gym.Elite.Gym.auth.repo.MembershipPlanRepo;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
-import com.gym.Elite.Gym.tenants.repo.TenantRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,13 +20,9 @@ import java.util.stream.Collectors;
 public class MembershipPlanService {
 
     private final MembershipPlanRepo membershipPlanRepo;
-    private final TenantRepo tenantRepo;
     private final MemberShipMapper membershipMapper;
 
     public ResponseDto createPlan(UUID tenantId, MembershipPlanRequestDTO request) {
-
-        Tenants tenant = tenantRepo.findById(tenantId)
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
         MembershipPlan plan = MembershipPlan.builder()
                 .name(request.getName())
@@ -40,7 +34,7 @@ public class MembershipPlanService {
                 .discount(request.getDiscount())
                 .features(request.getFeatures())
                 .active(true)
-                .tenant(tenant)
+                .tenantId(tenantId.toString())
                 .build();
 
         membershipPlanRepo.save(plan);
@@ -49,7 +43,7 @@ public class MembershipPlanService {
     }
 
     public List<MembershipPlanResponseDTO> getPlansByTenant(UUID tenantId) {
-        return membershipPlanRepo.findByTenantId(tenantId)
+        return membershipPlanRepo.findByTenantId(tenantId.toString())
                 .stream()
                 .map(membershipMapper::mapToPlanDTO)
                 .collect(Collectors.toList());
@@ -77,7 +71,6 @@ public class MembershipPlanService {
 
         membershipPlanRepo.save(plan);
         return ResponseDto.builder().code(200).message("Membership Plan Updated Successfully").build();
-
     }
 
     public ResponseDto deletePlan(UUID planId) {
@@ -90,7 +83,6 @@ public class MembershipPlanService {
         plan.setActive(true);
         membershipPlanRepo.save(plan);
         return ResponseDto.builder().code(200).message("Membership Plan Activated Successfully").build();
-
     }
 
     public ResponseDto deactivatePlan(UUID planId) {
@@ -98,12 +90,10 @@ public class MembershipPlanService {
         plan.setActive(false);
         membershipPlanRepo.save(plan);
         return ResponseDto.builder().code(200).message("Membership Plan De-Activated Successfully").build();
-
     }
 
     private MembershipPlan getEntity(UUID id) {
         return membershipPlanRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Plan not found"));
     }
-
 }

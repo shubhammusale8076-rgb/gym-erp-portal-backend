@@ -2,9 +2,10 @@ package com.gym.Elite.Gym.payment.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gym.Elite.Gym.auth.entity.Member;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
+import com.gym.Elite.Gym.common.entity.TenantAware;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -15,9 +16,9 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @Table(name = "payments")
-public class Payment {
+public class Payment extends TenantAware {
 
     @Id
     @GeneratedValue
@@ -36,13 +37,10 @@ public class Payment {
     private PaymentStatus status;
 
     private String paymentMethod;
-
     private String cardLast4;
-
     private Date paymentDate;
 
     private UUID planId;
-
     private UUID subscriptionId;
 
     @ManyToOne
@@ -50,10 +48,6 @@ public class Payment {
     @JsonIgnore
     private Member member;
 
-    @ManyToOne
-    @JoinColumn(name = "tenant_id")
-    @JsonIgnore
-    private Tenants tenant;
 
     @Builder.Default
     @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL, orphanRemoval = true)

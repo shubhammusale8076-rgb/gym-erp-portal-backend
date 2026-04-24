@@ -10,6 +10,6 @@ import java.util.UUID;
 @Repository
 public interface ContactInfoRepo extends JpaRepository<ContactInfo, UUID> {
 
-    Optional<ContactInfo> findByTenant_IdAndStatus(UUID tenantId, String status);
+    Optional<ContactInfo> findByTenantIdAndStatus(UUID tenantId, String status);
 
 }

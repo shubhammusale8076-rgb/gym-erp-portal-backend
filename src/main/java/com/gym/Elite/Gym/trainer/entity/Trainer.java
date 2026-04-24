@@ -1,22 +1,21 @@
 package com.gym.Elite.Gym.trainer.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
+import com.gym.Elite.Gym.common.entity.TenantAware;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @Table(name = "trainers")
-public class Trainer {
+public class Trainer extends TenantAware {
 
     @Id
     @GeneratedValue
@@ -31,25 +30,24 @@ public class Trainer {
 
     // 🔹 WEBSITE PROFILE
     private String bio;
-
     private String profileImageUrl;
 
     @ElementCollection
     @CollectionTable(name = "trainer_skills", joinColumns = @JoinColumn(name = "trainer_id"))
     @Column(name = "skill")
-    private List<String> skills; // Yoga, HIIT, etc.
+    private List<String> skills;
 
-    private String certifications; // comma-separated or JSON later
+    private String certifications;
 
     // 🔹 SOCIAL LINKS
     private String instagramHandle;
     private String linkedinUrl;
 
-    // 🔹 AVAILABILITY (for UI like your screenshot)
+    // 🔹 AVAILABILITY
     @ElementCollection
     @CollectionTable(name = "trainer_available_days", joinColumns = @JoinColumn(name = "trainer_id"))
     @Column(name = "day")
-    private List<String> availableDays; // MON, TUE, etc.
+    private List<String> availableDays;
 
     private String morningShiftStart;
     private String morningShiftEnd;
@@ -57,20 +55,15 @@ public class Trainer {
     private String eveningShiftStart;
     private String eveningShiftEnd;
 
-    // 🔹 STATUS CONTROL (IMPORTANT)
-    private Boolean available; // accepting clients (CRM)
-    private Boolean active; // internal enable/disable
-
-    private Boolean visibleOnWebsite; // 🔥 website toggle
-    private Boolean featured; // highlight on homepage
+    // 🔹 STATUS CONTROL
+    private Boolean available;
+    private Boolean active;
+    private Boolean visibleOnWebsite;
+    private Boolean featured;
 
     // 🔹 AUDIT
     private Date createdOn;
     private Date updatedOn;
 
-    // 🔹 MULTI-TENANT
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false)
-    @JsonIgnore
-    private Tenants tenant;
+    // ✅ Multi-tenant: plain column, no FK constraint
 }

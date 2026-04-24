@@ -12,8 +12,6 @@ import com.gym.Elite.Gym.payment.entity.PaymentItem;
 import com.gym.Elite.Gym.payment.entity.PaymentStatus;
 import com.gym.Elite.Gym.payment.mapper.PaymentMapper;
 import com.gym.Elite.Gym.payment.repo.PaymentRepo;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
-import com.gym.Elite.Gym.tenants.repo.TenantRepo;
 import com.gym.Elite.Gym.utility.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +31,6 @@ import java.util.stream.Collectors;
 public class PaymentService {
 
     private final PaymentRepo paymentRepo;
-    private final TenantRepo tenantRepo;
     private final MemberRepo memberRepo;
     private final PaymentMapper paymentMapper;
     private final SubscriptionService subscriptionService;
@@ -46,12 +43,9 @@ public class PaymentService {
         Member member = memberRepo.findById(request.getMemberId())
                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
-        if (!member.getTenant().getId().equals(currentTenantId)) {
+        if (!currentTenantId.equals(member.getTenantId())) {
             throw new RuntimeException("Member does not belong to your tenant");
         }
-
-        Tenants tenant = tenantRepo.findById(currentTenantId)
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
         Payment payment = Payment.builder()
                 .transactionReference(generateReference())
@@ -65,7 +59,7 @@ public class PaymentService {
                 .status(PaymentStatus.PENDING)
                 .paymentDate(new Date())
                 .member(member)
-                .tenant(tenant)
+                .tenantId(currentTenantId)
                 .planId(request.getPlanId())
                 .subscriptionId(request.getSubscriptionId())
                 .build();
@@ -107,13 +101,14 @@ public class PaymentService {
 
         handleSubscriptionAfterPayment(payment);
 
-        eventPublisher.publish("PAYMENT_SUCCESS", payment.getTenant().getId().toString(), payment);
+        // tenantId is now a plain String — no entity traversal needed
+        eventPublisher.publish("PAYMENT_SUCCESS", payment.getTenantId().toString(), payment);
     }
 
     public PaymentResponseDTO getPaymentById(UUID paymentId) {
         Payment payment = getEntity(paymentId);
         UUID currentTenantId = SecurityUtils.getCurrentTenantId();
-        if (!payment.getTenant().getId().equals(currentTenantId)) {
+        if (!currentTenantId.equals(payment.getTenantId())) {
             throw new RuntimeException("Unauthorized");
         }
         return paymentMapper.mapToPaymentDTO(payment);
@@ -124,11 +119,7 @@ public class PaymentService {
                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
         UUID currentTenantId = SecurityUtils.getCurrentTenantId();
-        if (!member.getTenant().getId().equals(currentTenantId)) {
-            throw new RuntimeException("Unauthorized");
-        }
-
-        return paymentRepo.findByMemberId(memberId)
+        return paymentRepo.findByMemberIdAndTenantId(memberId, currentTenantId)
                 .stream()
                 .map(paymentMapper::mapToPaymentDTO)
                 .collect(Collectors.toList());

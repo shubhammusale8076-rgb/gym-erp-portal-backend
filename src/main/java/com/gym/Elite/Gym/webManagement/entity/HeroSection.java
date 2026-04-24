@@ -1,12 +1,9 @@
 package com.gym.Elite.Gym.webManagement.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.gym.Elite.Gym.tenants.entity.Tenants;
+import com.gym.Elite.Gym.common.entity.TenantAware;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,15 +12,14 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @Table(name = "hero_section")
-public class HeroSection {
+public class HeroSection extends TenantAware {
 
     @Id
     @GeneratedValue
     private UUID id;
 
-    private UUID gymId;
 
     @Column(columnDefinition = "TEXT")
     private String headline;
@@ -39,9 +35,4 @@ public class HeroSection {
     private String status; // DRAFT / PUBLISHED
 
     private LocalDateTime updatedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false)
-    @JsonIgnore
-    private Tenants tenant;
 }

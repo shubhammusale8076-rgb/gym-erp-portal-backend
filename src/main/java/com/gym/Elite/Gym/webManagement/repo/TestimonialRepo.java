@@ -10,7 +10,7 @@ import java.util.UUID;
 @Repository
 public interface TestimonialRepo extends JpaRepository<Testimonial, UUID> {
 
-    List<Testimonial> findByTenant_Id(UUID tenantId);
+    List<Testimonial> findByTenantId(UUID tenantId);
 
-    List<Testimonial> findByTenant_IdAndIsPublishedTrueAndIsApprovedTrue(UUID tenantId);
+    List<Testimonial> findByTenantIdAndIsPublishedTrueAndIsApprovedTrue(UUID tenantId);
 }
