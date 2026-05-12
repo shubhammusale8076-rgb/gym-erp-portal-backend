@@ -1,10 +1,10 @@
 package com.gym.Elite.Gym.webManagement.controller;
 
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
+import com.gym.Elite.Gym.common.service.CloudinaryService;
 import com.gym.Elite.Gym.utility.SecurityUtils;
 import com.gym.Elite.Gym.webManagement.dto.galleryDto.GalleryAssetRequestDTO;
 import com.gym.Elite.Gym.webManagement.dto.galleryDto.GalleryAssetResponseDTO;
-import com.gym.Elite.Gym.webManagement.service.CloudinaryService;
 import com.gym.Elite.Gym.webManagement.service.GalleryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -1,5 +1,6 @@
 package com.gym.Elite.Gym.auth.helper;
 
+import com.gym.Elite.Gym.auth.entity.CustomUserDetails;
 import com.gym.Elite.Gym.auth.service.UsersDetailService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -43,13 +44,15 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             if(SecurityContextHolder.getContext().getAuthentication() == null){
-                String userName = jwtTokenHelper.getUserNameFromToken(authToken);
-                UUID tenantId = jwtTokenHelper.getTenantIdFromToken(authToken);
+                String userName = jwtTokenHelper.getUsername(authToken);
+                UUID tenantId = jwtTokenHelper.getTenantId(authToken);
 
                 if(null != userName){
                     UserDetails userDetails = usersDetailService.loadUserByUsername(userName);
 
-                    if(jwtTokenHelper.validateToken(authToken,userDetails)) {
+                    CustomUserDetails customUser = (CustomUserDetails) userDetails;
+
+                    if(jwtTokenHelper.validateToken(authToken,userDetails,customUser.getTokenVersion())) {
                         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                         Map<String, Object> details = new HashMap<>();
                         details.put("tenantId", tenantId);

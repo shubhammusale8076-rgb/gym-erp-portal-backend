@@ -3,15 +3,19 @@ package com.gym.Elite.Gym.payment.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
+
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "payment_items")
+@Table(name = "gym_payment_items")
 public class PaymentItem {
 
     @Id
@@ -27,4 +31,11 @@ public class PaymentItem {
     @JoinColumn(name = "payment_id")
     @JsonIgnore
     private Payment payment;
-}
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdOn;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedOn;
+}

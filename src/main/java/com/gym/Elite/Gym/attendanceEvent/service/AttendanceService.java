@@ -1,211 +1,211 @@
 package com.gym.Elite.Gym.attendanceEvent.service;
 
-import com.gym.Elite.Gym.attendanceEvent.dto.ActiveMemberAttendanceDTO;
-import com.gym.Elite.Gym.attendanceEvent.dto.AttendanceEventDTO;
-import com.gym.Elite.Gym.attendanceEvent.dto.HeatmapRequestDTO;
-import com.gym.Elite.Gym.attendanceEvent.dto.HeatmapResponseDTO;
+import com.gym.Elite.Gym.attendanceEvent.audit.AttendanceAudit;
+import com.gym.Elite.Gym.attendanceEvent.audit.AttendanceAuditRepository;
+import com.gym.Elite.Gym.attendanceEvent.dto.*;
 import com.gym.Elite.Gym.attendanceEvent.entity.Attendance;
-import com.gym.Elite.Gym.attendanceEvent.entity.AttendanceEvent;
-import com.gym.Elite.Gym.attendanceEvent.entity.AttendanceStatus;
-import com.gym.Elite.Gym.attendanceEvent.repo.AttendanceEventRepo;
+import com.gym.Elite.Gym.attendanceEvent.enums.AttendanceActorType;
+import com.gym.Elite.Gym.attendanceEvent.enums.AttendanceStatus;
+import com.gym.Elite.Gym.attendanceEvent.exception.AttendanceException;
+import com.gym.Elite.Gym.attendanceEvent.mapper.AttendanceMapper;
 import com.gym.Elite.Gym.attendanceEvent.repo.AttendanceRepo;
-import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
-import com.gym.Elite.Gym.auth.entity.Member;
-import com.gym.Elite.Gym.auth.repo.MemberRepo;
-import com.gym.Elite.Gym.tenants.repo.TenantRefRepository;
+import com.gym.Elite.Gym.attendanceEvent.resolver.AttendanceActorResolver;
+import com.gym.Elite.Gym.attendanceEvent.resolver.ResolverFactory;
+import com.gym.Elite.Gym.attendanceEvent.resolver.ResolvedActor;
+import com.gym.Elite.Gym.attendanceEvent.validator.AttendanceValidationStrategy;
+import com.gym.Elite.Gym.attendanceEvent.validator.ValidationStrategyFactory;
 import com.gym.Elite.Gym.utility.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Optional;
+import java.util.UUID;
 
+/**
+ * Unified Enterprise Attendance Engine.
+ *
+ * Refactored to support Actor Type Architecture:
+ * - Uses Resolvers to find actors (Member, Trainer, Staff).
+ * - Uses Validation Strategies for actor-specific business rules.
+ * - Centralizes lifecycle management for all attendance events.
+ */
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Slf4j
 public class AttendanceService {
 
-    private final AttendanceEventRepo eventRepo;
     private final AttendanceRepo attendanceRepo;
-    private final MemberRepo memberRepository;
-    private final TenantRefRepository tenantRefRepository;
+    private final AttendanceAuditRepository auditRepo;
+    private final AttendanceMapper attendanceMapper;
+    
+    private final ResolverFactory resolverFactory;
+    private final ValidationStrategyFactory validationFactory;
 
-    private static final int SESSION_GAP_MINUTES = 90;
-
-    public ResponseDto recordEvent(AttendanceEventDTO dto) {
-
+    /**
+     * Entry point for device-driven attendance (Biometric, RFID, QR).
+     */
+    @Transactional
+    public AttendanceEventResponseDto recordDeviceEvent(AttendanceEventDto event) {
         UUID tenantId = SecurityUtils.getCurrentTenantId();
+        
+        // 1. Resolve Actor
+        ResolvedActor actor = resolveActor(tenantId, event);
+        log.info("Processing attendance for {}: {} (ID: {})", actor.getType(), actor.getName(), actor.getId());
 
-        tenantRefRepository.findById(tenantId)
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+        // 2. Determine Action (Check-in or Check-out)
+        Optional<Attendance> openSession = attendanceRepo.findFirstByActorIdAndActorTypeAndStatusAndTenantIdOrderByCheckInTimeDesc(
+                actor.getId(), actor.getType(), AttendanceStatus.CHECKED_IN, tenantId);
 
-        Member member = memberRepository.findById(dto.getMemberId())
-                .orElseThrow(() -> new RuntimeException("Member not found"));
+        if (openSession.isPresent()) {
+            Attendance attendance =  processCheckOut(openSession.get(), event);
 
-        AttendanceEvent event = AttendanceEvent.builder()
-                .member(member)
-                .eventTime(dto.getEventTime())
-                .source(dto.getSource())
-                .deviceId(dto.getDeviceId())
-                .processed(false)
-                .createdAt(LocalDateTime.now())
-                .tenantId(tenantId)
+            return AttendanceEventResponseDto.builder()
+                    .success(true)
+                    .message("Check-out successful")
+                    .attendanceId(attendance.getId())
+                    .actorId(actor.getId())
+                    .actorName(actor.getName())
+                    .actorType(actor.getType())
+                    .status(attendance.getStatus())
+                    .eventType("CHECK_OUT")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        } else {
+            // 3. Validate for Check-in
+            AttendanceValidationStrategy validator = validationFactory.getStrategy(actor.getType());
+            ValidationResult validation = validator.validate(tenantId, actor.getId(), event);
+
+            if (!validation.isValid()) {
+                log.warn("Attendance rejected for {}: {}", actor.getName(), validation.getFailureReason());
+                logAudit(tenantId, actor, "REJECTED", null, validation.getFailureReason(), event);
+
+                return AttendanceEventResponseDto.builder()
+                        .success(false)
+                        .message(validation.getFailureReason())
+                        .actorId(actor.getId())
+                        .actorName(actor.getName())
+                        .actorType(actor.getType())
+                        .status(AttendanceStatus.REJECTED)
+                        .eventType("REJECTED")
+                        .timestamp(LocalDateTime.now())
+                        .build();
+            }
+
+            Attendance attendance = processCheckIn(tenantId, actor, event);
+
+            return AttendanceEventResponseDto.builder()
+                    .success(true)
+                    .message("Check-in successful")
+                    .attendanceId(attendance.getId())
+                    .actorId(actor.getId())
+                    .actorName(actor.getName())
+                    .actorType(actor.getType())
+                    .status(attendance.getStatus())
+                    .eventType("CHECK_IN")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
+    }
+
+    /**
+     * Manual check-in via dashboard.
+     */
+    @Transactional
+    public AttendanceResponse manualCheckIn(ManualAttendanceRequest request) {
+        UUID tenantId = SecurityUtils.getCurrentTenantId();
+        
+        AttendanceActorResolver resolver = resolverFactory.getResolver(request.getActorType());
+        ResolvedActor actor = resolver.resolveById(tenantId, request.getActorId())
+                .orElseThrow(() -> new AttendanceException("Actor not found: " + request.getActorId()));
+
+        // Validate
+        AttendanceValidationStrategy validator = validationFactory.getStrategy(request.getActorType());
+        AttendanceEventDto eventDto = AttendanceEventDto.builder()
+                .actorId(request.getActorId())
+                .actorType(request.getActorType())
+                .source(request.getSource())
+                .notes(request.getNotes())
+                .timestamp(LocalDateTime.now())
                 .build();
-        eventRepo.save(event);
 
-        processAttendance(tenantId, member, dto.getEventTime().toLocalDate());
+        ValidationResult validation = validator.validate(tenantId, actor.getId(), eventDto);
+        if (!validation.isValid()) {
+            throw new AttendanceException(validation.getFailureReason());
+        }
 
-        return ResponseDto.builder().code(201).message("Attendance event recorded").build();
+        Attendance attendance = processCheckIn(tenantId, actor, eventDto);
+        return attendanceMapper.toResponse(attendance, actor.getName());
     }
 
-    public void processAttendance(UUID tenantId, Member member, LocalDate date) {
-
-        List<AttendanceEvent> events =
-                eventRepo.findByTenantIdAndMember_IdAndEventTimeBetweenOrderByEventTimeAsc(
-                        tenantId,
-                        member.getId(),
-                        date.atStartOfDay(),
-                        date.atTime(23, 59, 59)
-                );
-
-        if (events.isEmpty()) return;
-
-        Attendance attendance = attendanceRepo
-                .findByTenantIdAndMember_IdAndDate(tenantId, member.getId(), date)
-                .orElseGet(() -> {
-                    Attendance a = Attendance.builder()
-                            .member(member)
-                            .date(date)
-                            .tenantId(tenantId)
-                            .build();
-                    return a;
-                });
-
-        // ✅ First event = check-in
-        LocalDateTime checkIn = events.get(0).getEventTime();
-
-        LocalDateTime checkOut = null;
-
-        // ✅ Gap-based detection
-        for (int i = 1; i < events.size(); i++) {
-
-            long gap = Duration.between(
-                    events.get(i - 1).getEventTime(),
-                    events.get(i).getEventTime()
-            ).toMinutes();
-
-            if (gap > SESSION_GAP_MINUTES) {
-                checkOut = events.get(i - 1).getEventTime();
-                break;
-            }
+    private ResolvedActor resolveActor(UUID tenantId, AttendanceEventDto event) {
+        AttendanceActorResolver resolver = resolverFactory.getResolver(event.getActorType());
+        
+        if (event.getActorId() != null) {
+            return resolver.resolveById(tenantId, event.getActorId())
+                    .orElseThrow(() -> new AttendanceException("Actor not found by ID"));
+        } else if (event.getActorCode() != null) {
+            return resolver.resolveByCode(tenantId, event.getActorCode())
+                    .orElseThrow(() -> new AttendanceException("Actor not found by Code: " + event.getActorCode()));
         }
-
-        // ✅ If continuous events → last is checkout
-        if (checkOut == null && events.size() > 1) {
-            checkOut = events.get(events.size() - 1).getEventTime();
-        }
-
-        attendance.setCheckInTime(checkIn);
-        attendance.setCheckOutTime(checkOut);
-
-        if (checkOut != null) {
-            int duration = (int) Duration.between(checkIn, checkOut).toMinutes();
-            attendance.setTotalDurationMinutes(duration);
-            attendance.setStatus(AttendanceStatus.PRESENT);
-        } else {
-            attendance.setStatus(AttendanceStatus.IN_PROGRESS);
-        }
-
-        attendance.setUpdatedAt(LocalDateTime.now());
-
-        attendanceRepo.save(attendance);
+        
+        throw new AttendanceException("No actor identification provided in event");
     }
 
-    public List<ActiveMemberAttendanceDTO> getTodayActiveMembers() {
+    private Attendance processCheckIn(UUID tenantId, ResolvedActor actor, AttendanceEventDto event) {
+        Attendance attendance = Attendance.builder()
+                .tenantId(tenantId)
+                .actorId(actor.getId())
+                .actorType(actor.getType())
+                .attendanceDate(LocalDate.now())
+                .checkInTime(event.getTimestamp() != null ? event.getTimestamp() : LocalDateTime.now())
+                .status(AttendanceStatus.CHECKED_IN)
+                .source(event.getSource())
+                .deviceId(event.getDeviceId())
+                .verificationId(event.getVerificationId())
+                .notes(event.getNotes())
+                .verified(true)
+                .build();
 
-        UUID tenantId = SecurityUtils.getCurrentTenantId();
-
-        tenantRefRepository.findById(tenantId)
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
-
-        LocalDate today = LocalDate.now();
-
-        List<Attendance> records =
-                attendanceRepo.findTodayActiveMembers(tenantId, today);
-
-        return records.stream()
-                .map(a -> ActiveMemberAttendanceDTO.builder()
-                        .memberId(a.getMember().getId())
-                        .memberName(a.getMember().getFullName())
-                        .membershipType("Standard")
-                        .checkInTime(a.getCheckInTime())
-                        .profileImage("Null")
-                        .build())
-                .toList();
+        Attendance saved = attendanceRepo.save(attendance);
+        logAudit(tenantId, actor, "CHECK_IN", saved.getId(), "Check-in successful", event);
+        return saved;
     }
 
-    public List<HeatmapResponseDTO> getHeatmap(HeatmapRequestDTO request) {
+    private Attendance processCheckOut(Attendance attendance, AttendanceEventDto event) {
+        LocalDateTime checkOutTime = event.getTimestamp() != null ? event.getTimestamp() : LocalDateTime.now();
+        attendance.setCheckOutTime(checkOutTime);
+        attendance.setStatus(AttendanceStatus.COMPLETED);
+        
+        long duration = Duration.between(attendance.getCheckInTime(), checkOutTime).toMinutes();
+        attendance.setTotalDurationMinutes((int) duration);
 
-        UUID tenantId = SecurityUtils.getCurrentTenantId();
-
-        tenantRefRepository.findById(tenantId)
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
-
-        LocalDate startDate;
-        LocalDate endDate = LocalDate.now();
-
-        // ✅ Range logic
-        if (request.getStartDate() != null && request.getEndDate() != null) {
-            startDate = request.getStartDate();
-            endDate = request.getEndDate();
-        } else {
-            switch (request.getRange()) {
-                case "7D" -> startDate = endDate.minusDays(7);
-                case "30D" -> startDate = endDate.minusDays(30);
-                case "6M" -> startDate = endDate.minusMonths(6);
-                default -> startDate = endDate.minusDays(30);
-            }
-        }
-
-        List<Object[]> rawData = attendanceRepo.getAttendanceHeatmap(
-                tenantId,
-                request.getMemberId(),
-                startDate,
-                endDate
-        );
-
-        // 🔥 Convert to map for fast lookup
-        Map<LocalDate, Integer> attendanceMap = new HashMap<>();
-
-        for (Object[] row : rawData) {
-            LocalDate date = (LocalDate) row[0];
-            Long count = (Long) row[1];
-
-            attendanceMap.put(date, count.intValue());
-        }
-
-        // 🔥 Fill missing dates (VERY IMPORTANT for UI)
-        List<HeatmapResponseDTO> response = new ArrayList<>();
-
-        LocalDate current = startDate;
-
-        while (!current.isAfter(endDate)) {
-
-            response.add(
-                    HeatmapResponseDTO.builder()
-                            .date(current)
-                            .count(attendanceMap.getOrDefault(current, 0))
-                            .build()
-            );
-
-            current = current.plusDays(1);
-        }
-
-        return response;
+        Attendance saved =  attendanceRepo.save(attendance);
+        
+        ResolvedActor actor = ResolvedActor.builder()
+                .id(attendance.getActorId())
+                .type(attendance.getActorType())
+                .build(); // Name not strictly needed for audit logging here
+        
+        logAudit(attendance.getTenantId(), actor, "CHECK_OUT", attendance.getId(), "Check-out successful", event);
+        return saved;
     }
-    // ✅ Fetch for UI
 
+    private void logAudit(UUID tenantId, ResolvedActor actor, String action, UUID attendanceId, String reason, AttendanceEventDto event) {
+        AttendanceAudit audit = AttendanceAudit.builder()
+                .tenantId(tenantId)
+                .actorId(actor.getId())
+                .actorType(actor.getType())
+                .attendanceId(attendanceId)
+                .action(action)
+                .reason(reason)
+                .source(event.getSource())
+                .modifiedBy("SYSTEM")
+                .build();
+        auditRepo.save(audit);
+    }
 }

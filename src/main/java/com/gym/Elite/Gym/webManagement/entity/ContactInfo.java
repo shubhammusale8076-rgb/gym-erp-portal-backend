@@ -2,8 +2,11 @@ package com.gym.Elite.Gym.webManagement.entity;
 
 import com.gym.Elite.Gym.common.entity.TenantAware;
 import jakarta.persistence.*;
-import lombok.experimental.SuperBuilder;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -38,5 +41,11 @@ public class ContactInfo extends TenantAware {
     @Column(nullable = false)
     private String status; // DRAFT / PUBLISHED
 
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 }
+

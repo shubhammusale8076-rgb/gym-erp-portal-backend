@@ -18,11 +18,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -57,7 +58,7 @@ public class PaymentService {
                 .paymentMethod(request.getPaymentMethod())
                 .cardLast4(request.getCardLast4())
                 .status(PaymentStatus.PENDING)
-                .paymentDate(new Date())
+                .paymentDate(LocalDateTime.now())
                 .member(member)
                 .tenantId(currentTenantId)
                 .planId(request.getPlanId())
@@ -96,7 +97,7 @@ public class PaymentService {
 
         payment.setStatus(PaymentStatus.SUCCESS);
         payment.setTransactionReference(transactionReference);
-        payment.setPaymentDate(new Date());
+        payment.setPaymentDate(LocalDateTime.now());
         paymentRepo.save(payment);
 
         handleSubscriptionAfterPayment(payment);

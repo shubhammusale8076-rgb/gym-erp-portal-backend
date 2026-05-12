@@ -4,12 +4,15 @@ import com.gym.Elite.Gym.auth.dto.authDtos.RegistrationRequest;
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
 import com.gym.Elite.Gym.auth.entity.User;
 import com.gym.Elite.Gym.auth.repo.UserRepo;
+import com.gym.Elite.Gym.utility.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ServerErrorException;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +26,9 @@ public class RegistrationService {
     @Transactional
     public ResponseDto createUser(RegistrationRequest request) {
 
-        User existing = userRepo.findByEmail(request.getEmail());
+        UUID tenantId = SecurityUtils.getCurrentTenantId();
+
+        User existing = userRepo.findByEmailAndTenantId(request.getEmail(), tenantId);
 
         if (null != existing) {
             return ResponseDto.builder()
@@ -44,7 +49,7 @@ public class RegistrationService {
                 user.setTenantId(request.getTenantId());
             }
 
-            user.setAuthority(authorityService.getUserAuthority(request.getAuthorityCode()));
+            user.setAuthority(authorityService.getUserAuthority(request.getAuthorityCode(), request.getTenantId()));
             User savedUser = userRepo.save(user);
 
             return ResponseDto.builder()

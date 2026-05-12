@@ -8,7 +8,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -16,15 +19,15 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "member_subscription")
+@Table(name = "gym_member_subscription")
 public class MemberSubscription {
 
     @Id
     @GeneratedValue
     private UUID id;
 
-    private Date startDate;
-    private Date endDate;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
 
     @Enumerated(EnumType.STRING)
     private SubscriptionStatus status;
@@ -32,12 +35,30 @@ public class MemberSubscription {
     private Boolean active;
     private Boolean autoRenew;
     private Integer remainingSessions;
-    private Date createdOn;
-    private Date updatedOn;
+
+    private Integer durationInDays;
+    private Double price;
+    private Double discount;
+
+    @CreationTimestamp
+    private LocalDateTime createdOn;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedOn;
+
+    private LocalDateTime freezeStartDate;
+
+    private LocalDateTime freezeEndDate;
+
+    private Integer totalFreezeDays;
+
+    private String cancellationReason;
+
+    private LocalDateTime cancelledOn;
 
     // ✅ Tenant isolation — plain column, no FK constraint
     @Column(name = "tenant_id", nullable = false)
-    private String tenantId;
+    private UUID tenantId;
 
     @ManyToOne
     @JoinColumn(name = "member_id")

@@ -1,15 +1,14 @@
 package com.gym.Elite.Gym.auth.controller;
 
+import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
+import com.gym.Elite.Gym.auth.dto.userDtos.UpdateUserDto;
 import com.gym.Elite.Gym.auth.dto.userDtos.UserDetailsDto;
 import com.gym.Elite.Gym.auth.dto.userDtos.UserListDto;
 import com.gym.Elite.Gym.auth.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -34,6 +33,22 @@ public class UserController {
         List<UserListDto> userDetailsDtoList =  userService.getAllUsers();
 
         return new ResponseEntity<>(userDetailsDtoList, HttpStatus.OK);
+    }
+
+    @PutMapping("/update-user/{id}")
+    public ResponseEntity<ResponseDto> updateUser(@PathVariable UUID id, @RequestBody UpdateUserDto dto) {
+        ResponseDto responseDto = userService.updateUser(id, dto);
+        return new ResponseEntity<>(responseDto, HttpStatus.OK);
+
+    }
+
+    // 🔹 Delete User
+    @DeleteMapping("/delete-user/{id}")
+    public ResponseEntity<ResponseDto> deleteUser(@PathVariable UUID id) {
+
+        ResponseDto responseDto = userService.deleteUser(id);
+
+        return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }
 
 

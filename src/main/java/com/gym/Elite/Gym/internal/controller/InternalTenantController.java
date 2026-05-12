@@ -32,7 +32,7 @@ public class InternalTenantController {
     private String internalSecret;
 
     @PostMapping
-    public ResponseEntity<?> upsertTenant(
+    public ResponseEntity<?> registerTenant(
             @RequestHeader(value = "X-Internal-Secret", required = false) String secret,
             @RequestBody TenantRefRequest request) {
 

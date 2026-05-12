@@ -42,8 +42,9 @@ public class SessionService {
 
         Session session = Session.builder()
                 .name(dto.getName())
-                .date(dto.getSessionTime().toLocalDate())
-                .startTime(dto.getSessionTime().toLocalTime())
+                .date(dto.getSessionDate())
+                .startTime(dto.getStartTime())
+                .endTime((dto.getEndTime()))
                 .capacity(dto.getCapacity())
                 .status(SessionStatus.UPCOMING)
                 .tenantId(tenantId)
@@ -64,8 +65,9 @@ public class SessionService {
         }
 
         session.setName(dto.getName());
-        session.setDate(dto.getSessionTime().toLocalDate());
-        session.setStartTime(dto.getSessionTime().toLocalTime());
+        session.setDate(dto.getSessionDate());
+        session.setStartTime(dto.getStartTime());
+        session.setEndTime((dto.getEndTime()));
         session.setCapacity(dto.getCapacity());
         session.setUpdatedAt(LocalDateTime.now());
 

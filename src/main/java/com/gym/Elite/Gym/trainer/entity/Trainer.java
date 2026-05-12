@@ -5,7 +5,11 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import java.util.Date;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,16 +48,8 @@ public class Trainer extends TenantAware {
     private String linkedinUrl;
 
     // 🔹 AVAILABILITY
-    @ElementCollection
-    @CollectionTable(name = "trainer_available_days", joinColumns = @JoinColumn(name = "trainer_id"))
-    @Column(name = "day")
-    private List<String> availableDays;
-
-    private String morningShiftStart;
-    private String morningShiftEnd;
-
-    private String eveningShiftStart;
-    private String eveningShiftEnd;
+    @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TrainerAvailability> availability = new ArrayList<>();
 
     // 🔹 STATUS CONTROL
     private Boolean available;
@@ -62,8 +58,15 @@ public class Trainer extends TenantAware {
     private Boolean featured;
 
     // 🔹 AUDIT
-    private Date createdOn;
-    private Date updatedOn;
+    @CreationTimestamp
+    private LocalDateTime createdOn;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedOn;
+
+    @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL,orphanRemoval = true)
+    private List<TrainerMemberAssignment> assignments = new ArrayList<>();
+
 
     // ✅ Multi-tenant: plain column, no FK constraint
 }

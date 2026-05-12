@@ -17,10 +17,10 @@ public class MembershipPlanResponseDTO {
     private UUID id;
     private String name;
     private double price;
-    private Integer durationInDays;
-    private Integer sessionLimit;
-    private Boolean personalTrainerIncluded;
-    private Boolean dietPlanIncluded;
+    private String period;
+    private String badge;
+    private String theme;
+    private Boolean isPopular;
     private Double discount;
     private Boolean active;
     private List<String> features;

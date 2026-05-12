@@ -1,12 +1,11 @@
 package com.gym.Elite.Gym.auth.controller;
 
-import com.gym.Elite.Gym.auth.dto.authDtos.LoginRequest;
-import com.gym.Elite.Gym.auth.dto.authDtos.RegistrationRequest;
-import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
-import com.gym.Elite.Gym.auth.dto.authDtos.UserToken;
+import com.gym.Elite.Gym.auth.dto.authDtos.*;
 import com.gym.Elite.Gym.auth.entity.Authority;
+import com.gym.Elite.Gym.auth.entity.CustomUserDetails;
 import com.gym.Elite.Gym.auth.entity.User;
 import com.gym.Elite.Gym.auth.helper.JWTTokenHelper;
+import com.gym.Elite.Gym.auth.repo.UserRepo;
 import com.gym.Elite.Gym.auth.service.AuthorityService;
 import com.gym.Elite.Gym.auth.service.RegistrationService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,6 +30,7 @@ public class AuthController {
     private final AuthorityService authorityService;
     private final AuthenticationManager authenticationManager;
     private final JWTTokenHelper jwtTokenHelper;
+    private final UserRepo userRepo;
 
     @PostMapping("/register")
     public ResponseEntity<ResponseDto> register(@RequestBody RegistrationRequest request){
@@ -57,12 +58,18 @@ public class AuthController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             // 4. Get user details
-            User user = (User) authentication.getPrincipal();
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-            // 5. Generate JWT token
-            assert user != null;
-            UUID tenantId = user.getTenantId();
-            String token = jwtTokenHelper.generateToken(user.getEmail() , tenantId);
+            User user = userRepo.findByEmail(userDetails.getUsername());
+
+            user.setLastLogin(LocalDateTime.now());
+            userRepo.save(user);
+
+            String token = jwtTokenHelper.generateToken(
+                    userDetails.getUsername(),
+                    userDetails.getTenantId(),
+                    userDetails.getTokenVersion()
+            );
 
             // 6. Return response
             return ResponseEntity.ok(
@@ -83,16 +90,16 @@ public class AuthController {
     }
 
     @PostMapping("/addrole")
-    public ResponseEntity<?> addRole(@RequestBody Authority authority){
+    public ResponseEntity<?> addRole(@RequestBody AuthorityRequestDto authority){
 
-        Authority authority1 = authorityService.createAuthority(authority);
+        ResponseDto authority1 = authorityService.createAuthority(authority);
 
         return new ResponseEntity<>(authority1, HttpStatus.CREATED);
     }
 
     @GetMapping("/get-roles")
-    public ResponseEntity<List<Authority>> getAllAuthorities(){
-        List<Authority> authorityList = authorityService.getAllAuthorities();
+    public ResponseEntity<List<AuthorityResponseDto>> getAllAuthorities(){
+        List<AuthorityResponseDto> authorityList = authorityService.getAllAuthorities();
 
         return new ResponseEntity<>(authorityList, HttpStatus.OK);
 

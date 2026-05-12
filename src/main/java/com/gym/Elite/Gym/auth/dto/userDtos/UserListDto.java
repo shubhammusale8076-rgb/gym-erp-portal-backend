@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -19,6 +19,6 @@ public class UserListDto {
     private String email;
     private boolean enabled;
     private String authority;
-    private Date creationDate;
-    private Date lastLoginDate;
+    private LocalDateTime  creationDate;
+    private LocalDateTime lastLoginDate;
 }

@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -15,10 +15,10 @@ import java.util.UUID;
 public class MemberResponseDTO {
 
     private UUID id;
-    private String fullName;
+    private String name;        // fullName → name
     private String email;
-    private String phoneNumber;
-    private Boolean enabled;
-    private Boolean active;
-    private Date createdOn;
+    private String plan;        // NEW (can be default or from membership)
+    private String status;      // Active / Inactive (derived)
+    private LocalDateTime joinDate;    // formatted date (UI-ready)
 }
+

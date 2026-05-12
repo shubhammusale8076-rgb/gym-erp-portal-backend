@@ -19,11 +19,9 @@ public class UserMapper {
                 .phoneNumber(user.getPhoneNumber())
                 .enabled(user.isEnabled())
                 .authority(
-                        user.getAuthorities()
-                                .stream()
-                                .findFirst()
-                                .map(GrantedAuthority::getAuthority)
-                                .orElse(null)
+                        user.getAuthority() != null
+                                ?  user.getAuthority().getRoleCode()
+                                : null
                 )
                 .build();
     }
@@ -37,13 +35,12 @@ public class UserMapper {
                 .phoneNumber(user.getPhoneNumber())
                 .enabled(user.isEnabled())
                 .authority(
-                        user.getAuthorities()
-                                .stream()
-                                .findFirst()
-                                .map(GrantedAuthority::getAuthority)
-                                .orElse(null)
+                        user.getAuthority() != null
+                                ? "ROLE_" + user.getAuthority().getRoleCode()
+                                : null
                 )
                 .creationDate(user.getCreatedOn())
+                .lastLoginDate(user.getLastLogin())
                 .build();
     }
 }

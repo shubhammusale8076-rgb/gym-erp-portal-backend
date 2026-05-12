@@ -7,8 +7,13 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.util.ArrayList;
-import java.util.Date;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,7 +22,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@Table(name = "payments")
+@Table(name = "gym_payments")
 public class Payment extends TenantAware {
 
     @Id
@@ -38,7 +43,8 @@ public class Payment extends TenantAware {
 
     private String paymentMethod;
     private String cardLast4;
-    private Date paymentDate;
+    private LocalDateTime paymentDate;
+
 
     private UUID planId;
     private UUID subscriptionId;
@@ -48,8 +54,15 @@ public class Payment extends TenantAware {
     @JsonIgnore
     private Member member;
 
-
     @Builder.Default
     @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PaymentItem> items = new ArrayList<>();
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdOn;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedOn;
 }
+

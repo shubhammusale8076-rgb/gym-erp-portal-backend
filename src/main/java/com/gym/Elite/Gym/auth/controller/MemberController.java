@@ -1,6 +1,7 @@
 package com.gym.Elite.Gym.auth.controller;
 
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
+import com.gym.Elite.Gym.auth.dto.memberDto.MemberDetailResponseDTO;
 import com.gym.Elite.Gym.auth.dto.memberDto.MemberRequestDTO;
 import com.gym.Elite.Gym.auth.dto.memberDto.MemberResponseDTO;
 import com.gym.Elite.Gym.auth.service.MemberService;
@@ -19,21 +20,21 @@ public class MemberController {
 
     private final MemberService memberService;
 
-    @PostMapping("/create-member/{tenantId}")
-    public ResponseEntity<ResponseDto> createMember(@PathVariable UUID tenantId, @RequestBody MemberRequestDTO request) {
-        ResponseDto responseDto = memberService.createMember(tenantId, request);
+    @PostMapping("/create-member")
+    public ResponseEntity<ResponseDto> createMember( @RequestBody MemberRequestDTO request) {
+        ResponseDto responseDto = memberService.createMember( request);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
     @GetMapping("/get-member/{memberId}")
-    public ResponseEntity<MemberResponseDTO> getMember(@PathVariable UUID memberId) {
+    public ResponseEntity<MemberDetailResponseDTO> getMember(@PathVariable UUID memberId) {
         return ResponseEntity.ok(memberService.getMemberById(memberId));
     }
 
-    @GetMapping("/tenant/{tenantId}")
-    public ResponseEntity<List<MemberResponseDTO>> getMembersByTenant(@PathVariable UUID tenantId) {
+    @GetMapping("/by-tenant")
+    public ResponseEntity<List<MemberResponseDTO>> getMembersByTenant() {
 
-        return ResponseEntity.ok(memberService.getMembersByTenant(tenantId));
+        return ResponseEntity.ok(memberService.getMembersByTenant());
     }
 
     @PutMapping("/update-member/{memberId}")
@@ -59,4 +60,7 @@ public class MemberController {
         ResponseDto responseDto = memberService.deactivateMember(memberId);
         return ResponseEntity.ok(responseDto);
     }
+
+    // 🔹 ATTENDANCE
+
 }

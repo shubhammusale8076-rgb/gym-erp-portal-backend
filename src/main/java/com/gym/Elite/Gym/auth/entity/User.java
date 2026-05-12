@@ -1,6 +1,7 @@
 package com.gym.Elite.Gym.auth.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import com.gym.Elite.Gym.common.entity.TenantAware;
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,6 +10,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
@@ -17,7 +22,7 @@ import java.util.*;
 @AllArgsConstructor
 @SuperBuilder
 @Table(name = "gym_users")
-public class User extends TenantAware implements UserDetails {
+public class User extends TenantAware {
 
     @Id
     @GeneratedValue
@@ -28,38 +33,47 @@ public class User extends TenantAware implements UserDetails {
     @JsonIgnore
     private String password;
 
-    private Date createdOn;
+    @CreationTimestamp
+    @Column(name = "created_on", updatable = false)
+    private LocalDateTime  createdOn;
 
-    private Date updatedOn;
+    @UpdateTimestamp
+    @Column(name = "updated_on")
+    private LocalDateTime  updatedOn;
+
 
     @Column(nullable = false, unique = true)
     private String email;
 
     private String phoneNumber;
 
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
+
+    private Integer tokenVersion = 0;
+
     @Builder.Default
     private boolean enabled = false;
-
 
     @ManyToOne
     @JoinColumn(name = "authority_id")
     private Authority authority;
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        if (authority == null) return List.of();
-        Set<GrantedAuthority> authorities = new HashSet<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + authority.getRoleCode()));
-        return authorities;
-    }
-
-    @Override
-    public String getPassword() {
-        return this.password;
-    }
-
-    @Override
-    public String getUsername() {
-        return this.email;
-    }
+//    @Override
+//    public Collection<? extends GrantedAuthority> getAuthorities() {
+//        if (authority == null) return List.of();
+//        Set<GrantedAuthority> authorities = new HashSet<>();
+//        authorities.add(new SimpleGrantedAuthority("ROLE_" + authority.getRoleCode()));
+//        return authorities;
+//    }
+//
+//    @Override
+//    public String getPassword() {
+//        return this.password;
+//    }
+//
+//    @Override
+//    public String getUsername() {
+//        return this.email;
+//    }
 }

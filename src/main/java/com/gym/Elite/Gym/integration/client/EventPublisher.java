@@ -9,15 +9,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
 import java.util.UUID;
+
 
 @Component
 @Slf4j
 public class EventPublisher {
 
     @Autowired
-    private IntegrationClient integrationClient;
+    private IntegrationEventClient integrationClient;
 
     @Autowired
     private EventOutboxRepo outboxRepo;
@@ -39,8 +39,8 @@ public class EventPublisher {
                     .tenantId(tenantId)
                     .payload(jsonPayload)
                     .status("PENDING")
-                    .createdAt(new Date())
                     .build();
+
 
             outboxRepo.save(outbox);
 

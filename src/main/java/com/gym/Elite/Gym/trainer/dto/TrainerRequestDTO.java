@@ -31,11 +31,7 @@ public class TrainerRequestDTO {
     private String linkedinUrl;
 
     // Availability
-    private List<String> availableDays; // MON, TUE
-    private String morningShiftStart;
-    private String morningShiftEnd;
-    private String eveningShiftStart;
-    private String eveningShiftEnd;
+    private List<TrainerAvailabilityDTO> availability;
 
     // Status
     private Boolean available;

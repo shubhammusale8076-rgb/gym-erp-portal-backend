@@ -1,6 +1,7 @@
 package com.gym.Elite.Gym.auth.controller;
 
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
+import com.gym.Elite.Gym.auth.dto.membershipPlanDto.MemberShipPlanDto;
 import com.gym.Elite.Gym.auth.dto.membershipPlanDto.MembershipPlanRequestDTO;
 import com.gym.Elite.Gym.auth.dto.membershipPlanDto.MembershipPlanResponseDTO;
 import com.gym.Elite.Gym.auth.service.MembershipPlanService;
@@ -20,23 +21,32 @@ public class MembershipPlanController {
     private final MembershipPlanService planService;
 
 
-    @PostMapping("/create-plan/{tenantId}")
-    public ResponseEntity<ResponseDto> createPlan(@PathVariable UUID tenantId, @RequestBody MembershipPlanRequestDTO request) {
-        ResponseDto responseDto = planService.createPlan(tenantId, request);
+    @PostMapping("/create-plan")
+    public ResponseEntity<ResponseDto> createPlan(@RequestBody MembershipPlanRequestDTO request) {
+        ResponseDto responseDto = planService.createPlan( request);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
-    @GetMapping("/get-plans/tenant/{tenantId}")
-    public ResponseEntity<List<MembershipPlanResponseDTO>> getPlansByTenant(@PathVariable UUID tenantId) {
+    @GetMapping("/get-plans/by-tenant")
+    public ResponseEntity<List<MembershipPlanResponseDTO>> getPlansByTenant() {
 
-        return ResponseEntity.ok(planService.getPlansByTenant(tenantId));
+        return ResponseEntity.ok(planService.getPlansByTenant());
     }
+
+    @GetMapping("/get-plans-list/by-tenant")
+    public ResponseEntity<List<MemberShipPlanDto>> getPlansListByTenant() {
+
+        return ResponseEntity.ok(planService.getPlansListByTenant());
+    }
+
+
 
     @GetMapping("/get-plan/{planId}")
     public ResponseEntity<MembershipPlanResponseDTO> getPlan(@PathVariable UUID planId) {
 
         return ResponseEntity.ok(planService.getPlanById(planId));
     }
+
 
     @PutMapping("/update-plan/{planId}")
     public ResponseEntity<ResponseDto> updatePlan(@PathVariable UUID planId, @RequestBody MembershipPlanRequestDTO request) {

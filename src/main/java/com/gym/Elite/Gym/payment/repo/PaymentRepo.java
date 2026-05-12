@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface PaymentRepo extends JpaRepository<Payment, UUID> {
     List<Payment> findByMemberIdAndTenantId(UUID memberId, UUID tenantId);
     List<Payment> findByTenantId(UUID tenantId);
+
+    List<Payment> findTop5ByMemberIdOrderByCreatedOnDesc(UUID memberId);
 }

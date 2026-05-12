@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,6 +22,6 @@ public class PaymentResponseDTO {
     private String status;
     private String paymentMethod;
     private String cardLast4;
-    private Date paymentDate;
+    private LocalDateTime paymentDate;
     private List<PaymentItemDTO> items;
-}
+}

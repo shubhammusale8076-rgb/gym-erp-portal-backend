@@ -1,8 +1,9 @@
 package com.gym.Elite.Gym.trainer.controller;
 
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
-import com.gym.Elite.Gym.trainer.dto.TrainerRequestDTO;
-import com.gym.Elite.Gym.trainer.dto.TrainerResponseDTO;
+import com.gym.Elite.Gym.trainer.dto.*;
+import com.gym.Elite.Gym.trainer.service.TrainerAttendanceService;
+import com.gym.Elite.Gym.trainer.service.TrainerLeaveService;
 import com.gym.Elite.Gym.trainer.service.TrainerService;
 import com.gym.Elite.Gym.utility.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,8 @@ import java.util.UUID;
 public class TrainerController {
 
     private final TrainerService trainerService;
+    private final TrainerAttendanceService attendanceService;
+    private final TrainerLeaveService leaveService;
 
     // ✅ CREATE (Admin - CRM / Website Management)
     @PostMapping("/create-trainer")
@@ -33,10 +36,10 @@ public class TrainerController {
 
     // ✅ GET ALL TRAINERS (Admin Panel)
     @GetMapping("/get-all")
-    public ResponseEntity<List<TrainerResponseDTO>> getAllTrainers() {
+    public ResponseEntity<List<TrainerListDTO>> getAllTrainers() {
 
         UUID tenantId = SecurityUtils.getCurrentTenantId();
-        List<TrainerResponseDTO> trainerResponseDTOS=  trainerService.getAllTrainers(tenantId);
+        List<TrainerListDTO> trainerResponseDTOS=  trainerService.getAllTrainers(tenantId);
         return new ResponseEntity<>(trainerResponseDTOS, HttpStatus.OK);
     }
 
@@ -107,4 +110,33 @@ public class TrainerController {
         List<TrainerResponseDTO> trainerResponseDTOS = trainerService.getWebsiteTrainers(tenantId);
         return new ResponseEntity<>(trainerResponseDTOS, HttpStatus.OK);
     }
+
+//    // 🔹 ATTENDANCE
+//    @PostMapping("/{trainerId}/check-in")
+//    public ResponseEntity<TrainerAttendanceResponseDTO> checkIn(@PathVariable UUID trainerId, @RequestBody(required = false) TrainerAttendanceRequestDTO request) {
+//        return ResponseEntity.ok(attendanceService.checkIn(trainerId, request));
+//    }
+//
+//    @PostMapping("/{trainerId}/check-out")
+//    public ResponseEntity<TrainerAttendanceResponseDTO> checkOut(@PathVariable UUID trainerId) {
+//        return ResponseEntity.ok(attendanceService.checkOut(trainerId));
+//    }
+//
+//    @GetMapping("/{trainerId}/attendance")
+//    public ResponseEntity<List<TrainerAttendanceResponseDTO>> getAttendance(@PathVariable UUID trainerId, @RequestParam String month) {
+//        return ResponseEntity.ok(attendanceService.getAttendanceByMonth(trainerId, month));
+//    }
+
+    // 🔹 LEAVE
+    @PostMapping("/{trainerId}/leave")
+    public ResponseEntity<TrainerLeaveResponseDTO> applyLeave(@PathVariable UUID trainerId, @RequestBody TrainerLeaveRequestDTO request) {
+        return ResponseEntity.ok(leaveService.applyLeave(trainerId, request));
+    }
+
+    @GetMapping("/{trainerId}/leave")
+    public ResponseEntity<List<TrainerLeaveResponseDTO>> getLeaves(@PathVariable UUID trainerId) {
+        return ResponseEntity.ok(leaveService.getTrainerLeaves(trainerId));
+    }
+
+
 }

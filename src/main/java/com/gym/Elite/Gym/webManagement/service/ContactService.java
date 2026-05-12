@@ -2,7 +2,7 @@ package com.gym.Elite.Gym.webManagement.service;
 
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
 import com.gym.Elite.Gym.tenants.repo.TenantRefRepository;
-import com.gym.Elite.Gym.config.ResourceNotFoundException;
+import com.gym.Elite.Gym.common.config.ResourceNotFoundException;
 import com.gym.Elite.Gym.utility.SecurityUtils;
 import com.gym.Elite.Gym.webManagement.dto.contactUsDto.ContactPageDTO;
 import com.gym.Elite.Gym.webManagement.dto.contactUsDto.OperatingHoursDto;

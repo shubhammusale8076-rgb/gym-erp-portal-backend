@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.UUID;
 @Data
 @Builder
@@ -20,5 +20,6 @@ public class TenantDetailsDTO {
     private String phoneNumber;
     private String plan;
     private Boolean status;
-    private Date createdOn;
+    private LocalDateTime createdOn;
 }
+

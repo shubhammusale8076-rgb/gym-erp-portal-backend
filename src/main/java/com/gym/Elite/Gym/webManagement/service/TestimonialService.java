@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional  
 public class TestimonialService {
 
     private final TestimonialRepo repo;
@@ -47,9 +47,6 @@ public class TestimonialService {
         t.setPublished(Boolean.TRUE.equals(dto.getPublishNow()));
         t.setFeatured(Boolean.TRUE.equals(dto.getFeatured()));
 
-        t.setCreatedAt(LocalDateTime.now());
-        t.setUpdatedAt(LocalDateTime.now());
-
         repo.save(t);
 
         return ResponseDto.builder().code(201).message("Feedback Submitted Successfully").build();
@@ -72,7 +69,6 @@ public class TestimonialService {
         }
 
         t.setPublished(true);
-        t.setUpdatedAt(LocalDateTime.now());
 
         repo.save(t);
 
@@ -84,7 +80,6 @@ public class TestimonialService {
         Testimonial t = getById(id);
 
         t.setPublished(false);
-        t.setUpdatedAt(LocalDateTime.now());
 
         repo.save(t);
         return ResponseDto.builder().code(201).message("Feedback Un-Published Successfully").build();
@@ -95,7 +90,6 @@ public class TestimonialService {
         Testimonial t = getById(id);
 
         t.setFeatured(!t.isFeatured());
-        t.setUpdatedAt(LocalDateTime.now());
 
         repo.save(t);
     }

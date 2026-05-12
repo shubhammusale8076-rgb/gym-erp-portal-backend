@@ -20,7 +20,6 @@ public class HeroSection extends TenantAware {
     @GeneratedValue
     private UUID id;
 
-
     @Column(columnDefinition = "TEXT")
     private String headline;
 

@@ -1,20 +1,20 @@
 package com.gym.Elite.Gym.attendanceEvent.controller;
 
-import com.gym.Elite.Gym.attendanceEvent.dto.ActiveMemberAttendanceDTO;
-import com.gym.Elite.Gym.attendanceEvent.dto.AttendanceEventDTO;
-import com.gym.Elite.Gym.attendanceEvent.dto.HeatmapRequestDTO;
-import com.gym.Elite.Gym.attendanceEvent.dto.HeatmapResponseDTO;
-import com.gym.Elite.Gym.attendanceEvent.entity.Attendance;
+import com.gym.Elite.Gym.attendanceEvent.dto.AttendanceResponse;
+import com.gym.Elite.Gym.attendanceEvent.dto.ManualAttendanceRequest;
+import com.gym.Elite.Gym.attendanceEvent.enums.AttendanceActorType;
 import com.gym.Elite.Gym.attendanceEvent.service.AttendanceService;
-import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.util.List;
+import java.util.UUID;
 
+/**
+ * Unified Attendance API.
+ * Supports Members, Trainers, and Staff.
+ */
 @RestController
 @RequestMapping("/api/attendance")
 @RequiredArgsConstructor
@@ -22,41 +22,33 @@ public class AttendanceController {
 
     private final AttendanceService attendanceService;
 
-    @PostMapping("/event")
-    public ResponseEntity<ResponseDto> recordEvent(@RequestBody AttendanceEventDTO dto) {
-
-        ResponseDto responseDto = attendanceService.recordEvent(dto);
-        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    /**
+     * Manual check-in for any actor type (Member, Trainer, Staff).
+     */
+    @PostMapping("/manual")
+    public ResponseEntity<AttendanceResponse> manualCheckIn(@Valid @RequestBody ManualAttendanceRequest request) {
+        return ResponseEntity.ok(attendanceService.manualCheckIn(request));
     }
 
-    @GetMapping("/active-members")
-    public ResponseEntity<List<ActiveMemberAttendanceDTO>> getActiveMembers() {
-
-        List<ActiveMemberAttendanceDTO> memberAttendanceDTOS = attendanceService.getTodayActiveMembers();
-        return new ResponseEntity<>(memberAttendanceDTOS, HttpStatus.OK);
+    /**
+     * Legacy convenience endpoint for member check-in.
+     */
+    @PostMapping("/member/{memberId}")
+    public ResponseEntity<AttendanceResponse> memberCheckIn(@PathVariable UUID memberId) {
+        ManualAttendanceRequest request = new ManualAttendanceRequest();
+        request.setActorId(memberId);
+        request.setActorType(AttendanceActorType.MEMBER);
+        return ResponseEntity.ok(attendanceService.manualCheckIn(request));
     }
 
-    @GetMapping("/heatmap")
-    public ResponseEntity<List<HeatmapResponseDTO>> getHeatmap(
-            @RequestParam String memberId,
-            @RequestParam(required = false) String range,
-            @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate) {
-
-        HeatmapRequestDTO request = new HeatmapRequestDTO();
-
-        request.setMemberId(memberId);
-        request.setRange(range);
-
-        if (startDate != null && endDate != null) {
-            request.setStartDate(LocalDate.parse(startDate));
-            request.setEndDate(LocalDate.parse(endDate));
-        }
-
-        return ResponseEntity.ok(attendanceService.getHeatmap(request));
+    /**
+     * Legacy convenience endpoint for trainer check-in.
+     */
+    @PostMapping("/trainer/{trainerId}")
+    public ResponseEntity<AttendanceResponse> trainerCheckIn(@PathVariable UUID trainerId) {
+        ManualAttendanceRequest request = new ManualAttendanceRequest();
+        request.setActorId(trainerId);
+        request.setActorType(AttendanceActorType.TRAINER);
+        return ResponseEntity.ok(attendanceService.manualCheckIn(request));
     }
-
 }
-
-
-

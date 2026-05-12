@@ -1,8 +1,7 @@
 package com.gym.Elite.Gym.auth.controller;
 
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
-import com.gym.Elite.Gym.auth.dto.subscriptionDto.SubscriptionRequestDTO;
-import com.gym.Elite.Gym.auth.dto.subscriptionDto.SubscriptionResponseDTO;
+import com.gym.Elite.Gym.auth.dto.subscriptionDto.*;
 import com.gym.Elite.Gym.auth.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,8 +26,8 @@ public class SubscriptionController {
     }
 
     @GetMapping("/member/{memberId}")
-    public ResponseEntity<List<SubscriptionResponseDTO>> getByMember(@PathVariable UUID memberId) {
-        List<SubscriptionResponseDTO> dtoList = subscriptionService.getSubscriptionsByMember(memberId);
+    public ResponseEntity<SubscriptionResponseDTO> getByMember(@PathVariable UUID memberId) {
+        SubscriptionResponseDTO dtoList = subscriptionService.getSubscriptionsByMember(memberId);
         return new ResponseEntity<>(dtoList, HttpStatus.OK);
     }
 
@@ -44,4 +43,28 @@ public class SubscriptionController {
         return new ResponseEntity<>(responseDto, HttpStatus.OK);
 
     }
+
+    @GetMapping("/get-insight")
+    public ResponseEntity<SubscriptionInsightResponse> getInsights() {
+
+        return ResponseEntity.ok(subscriptionService.getInsights());
+    }
+
+    @GetMapping("/memberships")
+    public ResponseEntity<List<MembershipTableDTO>> getMemberships() {
+        return ResponseEntity.ok(subscriptionService.getMemberships());
+    }
+
+    @PostMapping("/{subscriptionId}/freeze")
+    public ResponseEntity<ResponseDto> freezeMembership(@PathVariable UUID subscriptionId, @RequestBody FreezeMembershipRequest request) {
+
+        return ResponseEntity.ok(subscriptionService.freezeMembership(subscriptionId, request));
+    }
+
+    @PostMapping("/{subscriptionId}/cancel")
+    public ResponseEntity<ResponseDto> cancelMembership(@PathVariable UUID subscriptionId, @RequestBody CancelMembershipRequest request) {
+
+        return ResponseEntity.ok(subscriptionService.cancelMembership(subscriptionId, request));
+    }
+
 }

@@ -2,6 +2,10 @@ package com.gym.Elite.Gym.auth.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "membership_plan")
+@Table(name = "gym_membership_plan")
 public class MembershipPlan {
 
     @Id
@@ -35,13 +39,17 @@ public class MembershipPlan {
 
     private Boolean active;
 
+    private Boolean isPopular;
+
+    private String badge;
+
     // ✅ Multi-tenant: plain column, no FK constraint
     @Column(name = "tenant_id", nullable = false)
-    private String tenantId;
+    private UUID tenantId;
 
     @ElementCollection
     @CollectionTable(
-            name = "membership_plan_features",
+            name = "gym_membership_plan_features",
             joinColumns = @JoinColumn(name = "plan_id", columnDefinition = "uuid")
     )
     @Column(name = "feature")
@@ -50,4 +58,11 @@ public class MembershipPlan {
     @Builder.Default
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberSubscription> subscriptions = new ArrayList<>();
+
+    @CreationTimestamp
+    private LocalDateTime createdOn;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedOn;
 }
+

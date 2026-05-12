@@ -6,7 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -31,6 +33,9 @@ public class EventOutbox {
     @Builder.Default
     private int retryCount = 0;
 
-    private Date createdAt;
-    private Date processedAt;
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    private LocalDateTime processedAt;
 }
+

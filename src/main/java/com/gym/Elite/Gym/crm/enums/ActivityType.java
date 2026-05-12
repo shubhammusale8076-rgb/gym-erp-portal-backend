@@ -1,0 +1,16 @@
+package com.gym.Elite.Gym.crm.enums;
+
+public enum ActivityType {
+    LEAD_CREATED,
+    LEAD_UPDATED,
+    STAGE_CHANGED,
+    FOLLOW_UP_ADDED,
+    FOLLOW_UP_COMPLETED,
+    NOTE_ADDED,
+    TASK_ADDED,
+    TASK_COMPLETED,
+    LEAD_CONVERTED,
+    LEAD_LOST,
+    SCORE_UPDATED,
+    REMINDER_TRIGGERED
+}

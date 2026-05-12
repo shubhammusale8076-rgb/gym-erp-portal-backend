@@ -12,8 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
+
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -24,13 +25,9 @@ public class GalleryService {
 
     private final GalleryAssetRepo repo;
     private final GalleryMapper galleryMapper;
-    private final TenantRefRepository tenantRefRepository;
 
     // ✅ CREATE (after Cloudinary upload)
     public ResponseDto create(UUID tenantId, GalleryAssetRequestDTO dto) {
-
-        TenantRef tenant = tenantRefRepository.findById(tenantId)
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
         GalleryAsset asset = GalleryAsset.builder()
                 .imageUrl(dto.getImageUrl())
@@ -40,9 +37,9 @@ public class GalleryService {
                 .category(dto.getCategory())
                 .isVisible(Boolean.TRUE.equals(dto.getIsVisible()))
                 .displayOrder(dto.getDisplayOrder())
-                .createdAt(new Date())
                 .tenantId(tenantId)
                 .build();
+
 
         repo.save(asset);
 
@@ -78,9 +75,9 @@ public class GalleryService {
         asset.setCategory(dto.getCategory());
         asset.setIsVisible(dto.getIsVisible());
         asset.setDisplayOrder(dto.getDisplayOrder());
-        asset.setUpdatedAt(new Date());
 
         repo.save(asset);
+
 
         return ResponseDto.builder()
                 .code(200)

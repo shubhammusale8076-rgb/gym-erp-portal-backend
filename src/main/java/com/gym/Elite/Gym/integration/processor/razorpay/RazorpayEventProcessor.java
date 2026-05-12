@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.Map;
 import java.util.UUID;
@@ -24,6 +24,7 @@ import java.util.UUID;
 @Component
 @Slf4j
 public class RazorpayEventProcessor implements EventProcessor {
+
 
     @Autowired
     private PaymentService paymentService;
@@ -95,8 +96,10 @@ public class RazorpayEventProcessor implements EventProcessor {
         }
 
         // 5. Mark as processed (Transaction will commit this)
-        processedWebhookRepo.save(new ProcessedWebhook(event.getProviderEventId(), new Date()));
+        processedWebhookRepo.save(new ProcessedWebhook(event.getProviderEventId()));
     }
+
+
 
     private boolean verifySignature(WebhookEvent event) {
         try {
