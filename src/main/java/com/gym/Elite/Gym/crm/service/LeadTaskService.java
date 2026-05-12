@@ -1,5 +1,6 @@
 package com.gym.Elite.Gym.crm.service;
 
+import com.gym.Elite.Gym.auth.entity.User;
 import com.gym.Elite.Gym.crm.dto.TaskCreateRequest;
 import com.gym.Elite.Gym.crm.dto.TaskResponseDto;
 import com.gym.Elite.Gym.crm.entity.Lead;
@@ -39,7 +40,7 @@ public class LeadTaskService {
                 .title(request.getTitle())
                 .completed(false)
                 .dueDate(request.getDueDate())
-                .assignedTo(request.getAssignedTo())
+                .assignedTo(request.getAssignedTo() != null ? User.builder().id(request.getAssignedTo()).build() : null)
                 .build();
 
         task = taskRepository.save(task);
@@ -81,7 +82,7 @@ public class LeadTaskService {
                 .title(t.getTitle())
                 .completed(t.getCompleted())
                 .dueDate(t.getDueDate())
-                .assignedTo(t.getAssignedTo())
+                .assignedTo(t.getAssignedTo() != null ? t.getAssignedTo().getId() : null)
                 .createdAt(t.getCreatedAt())
                 .build();
     }
