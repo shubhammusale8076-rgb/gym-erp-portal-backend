@@ -9,8 +9,6 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @SuperBuilder
-@NoArgsConstructor
-@AllArgsConstructor
 public class LeadCreatedEvent extends BaseCrmEvent {
     private String source;
     private String name;

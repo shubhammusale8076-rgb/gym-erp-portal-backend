@@ -1,11 +1,12 @@
 package com.gym.Elite.Gym.crm.assignment.service;
 
+import com.gym.Elite.Gym.auth.entity.User;
+import com.gym.Elite.Gym.auth.repo.UserRepo;
 import com.gym.Elite.Gym.crm.assignment.entity.LeadAssignmentHistory;
 import com.gym.Elite.Gym.crm.assignment.repository.LeadAssignmentHistoryRepository;
 import com.gym.Elite.Gym.crm.entity.Lead;
+import com.gym.Elite.Gym.crm.outbox.service.OutboxService;
 import com.gym.Elite.Gym.crm.repository.LeadRepository;
-import com.gym.Elite.Gym.entity.User;
-import com.gym.Elite.Gym.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,15 +21,16 @@ import java.util.Optional;
 public class AssignmentEngine {
 
     private final LeadRepository leadRepository;
-    private final UserRepository userRepository;
+    private final UserRepo userRepo;
     private final LeadAssignmentHistoryRepository historyRepository;
+    private final OutboxService outboxService;
 
     @Transactional
     public void autoAssign(Lead lead) {
         log.info("Auto-assigning lead: {} for tenant: {}", lead.getId(), lead.getTenantId());
 
         // Simple Round-Robin implementation
-        List<User> eligibleStaff = userRepository.findByTenantIdAndActive(lead.getTenantId(), true);
+        List<User> eligibleStaff = userRepo.findByTenantIdAndEnabled(lead.getTenantId(), true);
         
         if (eligibleStaff.isEmpty()) {
             log.warn("No eligible staff found for auto-assignment in tenant: {}", lead.getTenantId());
@@ -46,6 +48,18 @@ public class AssignmentEngine {
         User previousStaff = lead.getAssignedTo();
         
         lead.setAssignedTo(staff);
+
+        // ── Outbox: LeadAssignedEvent ──────────────────────────────────────────
+        com.gym.Elite.Gym.crm.event.LeadAssignedEvent event = com.gym.Elite.Gym.crm.event.LeadAssignedEvent.builder()
+                .tenantId(lead.getTenantId())
+                .correlationId(org.slf4j.MDC.get(com.gym.Elite.Gym.crm.util.CorrelationIdFilter.CORRELATION_ID_LOG_VAR))
+                .leadId(lead.getId())
+                .assignedToId(staff.getId())
+                .assignedToName(staff.getFullName())
+                .timestamp(java.time.LocalDateTime.now())
+                .build();
+        outboxService.saveEvent(event, "LEAD", lead.getId().toString(), lead.getTenantId());
+
         leadRepository.save(lead);
 
         LeadAssignmentHistory history = LeadAssignmentHistory.builder()

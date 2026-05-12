@@ -1,5 +1,6 @@
 package com.gym.Elite.Gym.crm.service;
 
+import com.gym.Elite.Gym.auth.entity.User;
 import com.gym.Elite.Gym.crm.dto.*;
 import com.gym.Elite.Gym.crm.entity.*;
 import com.gym.Elite.Gym.crm.enums.*;
@@ -70,7 +71,7 @@ public class LeadServiceImpl implements LeadService {
                 .fitnessGoal(request.getFitnessGoal())
                 .nextAction(request.getNextAction())
                 .nextFollowUpAt(request.getNextFollowUpAt())
-                .assignedTo(request.getAssignedTo())
+                .assignedTo(request.getAssignedTo() != null ? User.builder().id(request.getAssignedTo()).build() : null)
                 .converted(false)
                 .deleted(false)
                 .followUpOverdue(false)
@@ -166,7 +167,7 @@ public class LeadServiceImpl implements LeadService {
                 .nextFollowUpAt(lead.getNextFollowUpAt())
                 .followUpOverdue(lead.getFollowUpOverdue())
                 .converted(lead.getConverted())
-                .assignedTo(lead.getAssignedTo())
+                .assignedTo(lead.getAssignedTo() != null ? lead.getAssignedTo().getId() : null)
                 .createdAt(lead.getCreatedAt())
                 .updatedAt(lead.getUpdatedAt())
                 .followUps(followUps)
@@ -205,7 +206,7 @@ public class LeadServiceImpl implements LeadService {
         if (request.getFitnessGoal() != null)     lead.setFitnessGoal(request.getFitnessGoal());
         if (request.getNextAction()  != null)     lead.setNextAction(request.getNextAction());
         if (request.getNextFollowUpAt() != null)  lead.setNextFollowUpAt(request.getNextFollowUpAt());
-        if (request.getAssignedTo()  != null)     lead.setAssignedTo(request.getAssignedTo());
+        if (request.getAssignedTo()  != null)     lead.setAssignedTo(User.builder().id(request.getAssignedTo()).build());
         lead.setUpdatedBy(getCurrentUsername());
 
         lead = leadRepository.save(lead);
@@ -465,7 +466,7 @@ public class LeadServiceImpl implements LeadService {
                 .nextFollowUpAt(l.getNextFollowUpAt())
                 .followUpOverdue(l.getFollowUpOverdue())
                 .converted(l.getConverted())
-                .assignedTo(l.getAssignedTo())
+                .assignedTo(l.getAssignedTo() != null ? l.getAssignedTo().getId() : null)
                 .createdAt(l.getCreatedAt())
                 .updatedAt(l.getUpdatedAt())
                 .build();
@@ -480,7 +481,7 @@ public class LeadServiceImpl implements LeadService {
                 .priority(l.getPriority())
                 .leadScore(l.getLeadScore())
                 .source(l.getSource())
-                .assignedTo(l.getAssignedTo())
+                .assignedTo(l.getAssignedTo() != null ? l.getAssignedTo().getId() : null)
                 .followUpOverdue(l.getFollowUpOverdue())
                 .nextFollowUpAt(l.getNextFollowUpAt())
                 .expectedRevenue(l.getExpectedRevenue())
@@ -498,7 +499,7 @@ public class LeadServiceImpl implements LeadService {
                 .remarks(f.getRemarks())
                 .completed(f.getCompleted())
                 .overdue(f.getOverdue())
-                .assignedTo(f.getAssignedTo())
+                .assignedTo(f.getAssignedTo() != null ? f.getAssignedTo().getId() : null)
                 .createdAt(f.getCreatedAt())
                 .build();
     }
@@ -532,7 +533,7 @@ public class LeadServiceImpl implements LeadService {
                 .title(t.getTitle())
                 .completed(t.getCompleted())
                 .dueDate(t.getDueDate())
-                .assignedTo(t.getAssignedTo())
+                .assignedTo(t.getAssignedTo() != null ? t.getAssignedTo().getId() : null)
                 .createdAt(t.getCreatedAt())
                 .build();
     }

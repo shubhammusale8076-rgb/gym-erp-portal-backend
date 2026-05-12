@@ -10,8 +10,6 @@ import java.util.Map;
 @Getter
 @Setter
 @SuperBuilder
-@NoArgsConstructor
-@AllArgsConstructor
 public class WhatsAppMessageRequestedEvent extends BaseCrmEvent {
     private String phone;
     private String template;

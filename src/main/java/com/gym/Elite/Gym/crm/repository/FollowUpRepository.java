@@ -40,7 +40,7 @@ public interface FollowUpRepository extends JpaRepository<FollowUp, UUID> {
 
     @Query("SELECT f FROM FollowUp f WHERE f.completed = false " +
            "AND f.overdue = false AND f.followUpAt < :now")
-    List<FollowUp> findAllPendingOverdue(@Param("now") LocalDateTime now);
+    List<FollowUp> findAllPendingOverdueGlobal(@Param("now") LocalDateTime now);
 
     // ─── Stats ───────────────────────────────────────────────────────────────
 
