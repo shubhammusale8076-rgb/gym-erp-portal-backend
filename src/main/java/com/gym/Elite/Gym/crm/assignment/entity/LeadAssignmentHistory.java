@@ -1,9 +1,11 @@
 package com.gym.Elite.Gym.crm.assignment.entity;
 
+import com.gym.Elite.Gym.common.entity.TenantAware;
 import com.gym.Elite.Gym.crm.entity.Lead;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "crm_lead_assignment_history")
@@ -12,11 +14,11 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LeadAssignmentHistory {
+public class LeadAssignmentHistory extends TenantAware {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    private UUID id;
 
     @ManyToOne
     @JoinColumn(name = "lead_id")

@@ -1,5 +1,6 @@
 package com.gym.Elite.Gym.trainer.entity;
 
+import com.gym.Elite.Gym.auth.entity.GymUser;
 import com.gym.Elite.Gym.common.entity.TenantAware;
 import jakarta.persistence.*;
 import lombok.*;
@@ -34,6 +35,7 @@ public class Trainer extends TenantAware {
 
     // 🔹 WEBSITE PROFILE
     private String bio;
+    private String aboutTrainer;
     private String profileImageUrl;
 
     @ElementCollection
@@ -67,6 +69,7 @@ public class Trainer extends TenantAware {
     @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL,orphanRemoval = true)
     private List<TrainerMemberAssignment> assignments = new ArrayList<>();
 
-
-    // ✅ Multi-tenant: plain column, no FK constraint
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true)
+    private GymUser gymUser;
 }

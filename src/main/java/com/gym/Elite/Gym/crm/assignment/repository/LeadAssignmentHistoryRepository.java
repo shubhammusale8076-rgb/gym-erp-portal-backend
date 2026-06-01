@@ -9,5 +9,8 @@ import java.util.UUID;
 
 @Repository
 public interface LeadAssignmentHistoryRepository extends JpaRepository<LeadAssignmentHistory, Long> {
-    List<LeadAssignmentHistory> findByLeadIdAndTenantIdOrderByCreatedAtDesc(UUID leadId, UUID tenantId);
-}
+    List<LeadAssignmentHistory>
+    findByLeadIdAndTenantIdOrderByChangedAtDesc(
+            UUID leadId,
+            UUID tenantId
+    );}

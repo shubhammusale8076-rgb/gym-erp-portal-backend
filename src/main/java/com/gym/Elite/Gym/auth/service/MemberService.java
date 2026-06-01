@@ -4,28 +4,24 @@ import com.gym.Elite.Gym.attendanceEvent.dto.AttendanceDTO;
 import com.gym.Elite.Gym.attendanceEvent.enums.AttendanceActorType;
 import com.gym.Elite.Gym.attendanceEvent.repo.AttendanceRepo;
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
-import com.gym.Elite.Gym.auth.dto.memberDto.FinancialDTO;
-import com.gym.Elite.Gym.auth.dto.memberDto.MemberDetailResponseDTO;
-import com.gym.Elite.Gym.auth.dto.memberDto.MemberRequestDTO;
-import com.gym.Elite.Gym.auth.dto.memberDto.MemberResponseDTO;
+import com.gym.Elite.Gym.auth.dto.memberDto.*;
 import com.gym.Elite.Gym.auth.dto.membershipPlanDto.PlanDTO;
-import com.gym.Elite.Gym.auth.entity.Member;
-import com.gym.Elite.Gym.auth.entity.MemberSubscription;
-import com.gym.Elite.Gym.auth.entity.MembershipPlan;
-import com.gym.Elite.Gym.auth.entity.SubscriptionStatus;
+import com.gym.Elite.Gym.auth.entity.*;
+import com.gym.Elite.Gym.auth.repo.*;
 import com.gym.Elite.Gym.auth.mapper.MemberMapper;
-import com.gym.Elite.Gym.auth.repo.MemberRepo;
-import com.gym.Elite.Gym.auth.repo.MembershipPlanRepo;
-import com.gym.Elite.Gym.auth.repo.SubscriptionPlanRepo;
 import com.gym.Elite.Gym.common.security.EncryptionService;
 import com.gym.Elite.Gym.integration.client.EventPublisher;
+import com.gym.Elite.Gym.integration.dto.PaymentLinkResponse;
+import com.gym.Elite.Gym.integration.entity.IntegrationType;
 import com.gym.Elite.Gym.payment.dto.TransactionDTO;
+import com.gym.Elite.Gym.payment.entity.PaymentTransaction;
 import com.gym.Elite.Gym.payment.repo.PaymentRepo;
+import com.gym.Elite.Gym.payment.service.PaymentTransactionService;
 import com.gym.Elite.Gym.trainer.dto.TrainerMemberDTO;
 import com.gym.Elite.Gym.trainer.entity.TrainerMemberAssignment;
+import com.gym.Elite.Gym.utility.PasswordGenerator;
 import com.gym.Elite.Gym.utility.SecurityUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,11 +39,13 @@ public class MemberService {
     private final AttendanceRepo attendanceRepo;
     private final PaymentRepo paymentRepo;
     private final SubscriptionPlanRepo subscriptionRepo;
-    private final PasswordEncoder passwordEncoder;
-    private final EventPublisher eventPublisher;
+    private final GymUserService gymUserService;
+    private final GymUserRepo gymUserRepo;
     private final EncryptionService encryptionService;
+    private final PaymentTransactionService paymentTransactionService;
+    private final RoleRepo roleRepo;
 
-    public ResponseDto createMember(MemberRequestDTO request) {
+    public MemberCreationResponseDto createMember(MemberRequestDTO request) {
 
         UUID tenantId = SecurityUtils.getCurrentTenantId();
         String email = request.getEmail().trim().toLowerCase();
@@ -61,16 +59,33 @@ public class MemberService {
             throw new RuntimeException("Member already exists");
         }
 
+        if (gymUserRepo.existsByEmailAndTenantId(email, tenantId)) {
+            throw new RuntimeException("A login account already exists for this email");
+        }
+
         MembershipPlan plan = planRepo.findByIdAndTenantId(request.getPlanId(), tenantId)
                 .orElseThrow(() -> new RuntimeException("Invalid plan"));
+
+        String generatedPassword = PasswordGenerator.generateStrongPassword();
+
+        GymUser gymUser = gymUserService.createGymUser(
+                email,
+                generatedPassword,
+                tenantId,
+                "MEMBER",
+                request.getFullName(),
+                request.getPhoneNumber(),
+                false
+        );
 
         Member member = Member.builder()
                 .fullName(request.getFullName())
                 .email(email)
                 .phoneNumber(request.getPhoneNumber())
-                .password(passwordEncoder.encode(request.getPassword()))
+                .gymUser(gymUser)
                 .aadhaarNumber(encryptedAadhaar) // 🔒 store carefully
-                .active(true)
+                .address(request.getAddress())
+                .active(false) // 💳 disabled on creation until onboarding payment is complete
                 .profileImageUrl(request.getProfileImageUrl())
                 .profileImagePublicId(request.getProfileImagePublicId())
                 .emergencyContactName(request.getEmergencyContactName())
@@ -95,10 +110,24 @@ public class MemberService {
 
         subscriptionRepo.save(subscription);
 
-        // 🚀 Trigger event via EventPublisher
-        eventPublisher.publish("MEMBERSHIP_CREATED", tenantId.toString(), member);
+        // 🚀 Create PaymentTransaction for Member Onboarding
+        PaymentTransaction transaction = paymentTransactionService.createPaymentTransaction(member, subscription);
 
-        return ResponseDto.builder().code(201).message("Member Created").build();
+        // 🚀 Attempt to sync with integration service for Razorpay link generation
+        // Remote failures MUST NOT roll back local db transaction, so errors are self-contained
+        PaymentLinkResponse paymentResponse = paymentTransactionService.syncPaymentTransaction(transaction, member, subscription);
+
+        // 🚀 Trigger event via EventPublisher
+
+        return MemberCreationResponseDto.builder()
+                .memberId(member.getId())
+                .fullName(member.getFullName())
+                .userName(member.getFullName())
+                .role(member.getGymUser().getRole().getRoleCode())
+                .temporaryPassword(generatedPassword)
+                .paymentLink(paymentResponse.getUniversalPaymentLink())
+                .razorpayPaymentLinkId(paymentResponse.getRazorpayOrderId())
+                .build();
     }
 
     public MemberDetailResponseDTO getMemberById(UUID memberId) {
@@ -181,6 +210,7 @@ public class MemberService {
             MembershipPlan plan = subscription.getPlan();
 
             planDto = PlanDTO.builder()
+                    .id(plan.getId())
                     .name(plan.getName())
                     .description("Premium membership plan")
                     .status(plan.getActive().toString())
@@ -209,6 +239,7 @@ public class MemberService {
                 .memberCode("AUR-" + member.getId().toString().substring(0, 4))
                 .fullName(member.getFullName())
                 .email(member.getEmail())
+                .status(member.getActive().toString())
                 .phoneNumber(member.getPhoneNumber())
                 .address(member.getAddress())
                 .profileImageUrl(member.getProfileImageUrl())
@@ -271,12 +302,18 @@ public class MemberService {
 
         Member member = getEntity(memberId,tenantId);
 
+        GymUser gymUser = member.getGymUser();
+
         UUID currentTenantId = SecurityUtils.getCurrentTenantId();
+
         if (!currentTenantId.equals(member.getTenantId())) {
             throw new RuntimeException("Unauthorized");
         }
 
         memberRepo.delete(member);
+
+        gymUserRepo.delete(gymUser);
+
         return ResponseDto.builder().code(200).message("Member Deleted Successfully").build();
     }
 
@@ -291,6 +328,9 @@ public class MemberService {
         }
 
         member.setActive(true);
+        if (member.getGymUser() != null) {
+            member.getGymUser().setEnabled(true);
+        }
         memberRepo.save(member);
         return ResponseDto.builder().code(200).message("Member Activated Successfully").build();
     }
@@ -306,6 +346,9 @@ public class MemberService {
         }
 
         member.setActive(false);
+        if (member.getGymUser() != null) {
+            member.getGymUser().setEnabled(false);
+        }
         memberRepo.save(member);
         return ResponseDto.builder().code(200).message("Member De-Activated Successfully").build();
     }
@@ -328,5 +371,49 @@ public class MemberService {
         }
 
         return total;
+    }
+
+    public List<UserSearchResponseDto> searchUsers(String query) {
+        UUID tenantId = SecurityUtils.getCurrentTenantId();
+
+        List<GymUser> users = gymUserRepo.searchUsers(query, tenantId);
+
+        return users.stream()
+                .map(user ->
+                        UserSearchResponseDto.builder()
+                                .id(user.getId())
+                                .fullName(user.getFullName())
+                                .email(user.getEmail())
+                                .build()
+                )
+                .toList();
+
+    }
+
+    public ResponseDto assignRoleToUsers(AssignUsersRoleRequestDto request) {
+
+        UUID tenantId = SecurityUtils.getCurrentTenantId();
+
+
+        Role role = roleRepo.findRoleForAssignment(request.getRoleId(), tenantId)
+                .orElseThrow(() -> new RuntimeException("Role not found."));
+
+
+
+        List<GymUser> users = gymUserRepo.findUsersForRoleAssignment(request.getUserIds(), tenantId);
+
+        if (users.isEmpty()) {
+            throw new RuntimeException("No users found for assignment."
+           );
+        }
+
+        users.forEach(user -> user.setRole(role));
+
+        gymUserRepo.saveAll(users);
+
+        return ResponseDto.builder()
+                .code(200)
+                .message("Role assigned successfully.")
+                .build();
     }
 }

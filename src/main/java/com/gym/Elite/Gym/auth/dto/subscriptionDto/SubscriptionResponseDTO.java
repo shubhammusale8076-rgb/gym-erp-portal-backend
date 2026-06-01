@@ -13,6 +13,9 @@ import java.util.UUID;
 @Builder
 public class SubscriptionResponseDTO {
 
+    private boolean success;
+    private String code;
+    private String message;
     private MemberDto member;
     private CurrentSubscriptionDto currentSubscription;
     private LoyaltyDto loyalty;

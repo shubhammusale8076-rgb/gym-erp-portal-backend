@@ -15,12 +15,14 @@ public class TrainerRequestDTO {
 
     private String fullName;
     private String email;
+    private String password;
     private String phoneNumber;
 
     private Integer experienceInYears;
 
     // Website profile
     private String bio;
+    private String aboutTrainer;
     private String profileImageUrl;
 
     private List<String> skills; // Yoga, HIIT

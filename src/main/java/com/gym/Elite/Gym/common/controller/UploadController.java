@@ -1,6 +1,7 @@
 package com.gym.Elite.Gym.common.controller;
 
 
+import com.gym.Elite.Gym.common.entity.ProfileImageType;
 import com.gym.Elite.Gym.common.service.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,10 +22,10 @@ public class UploadController {
 
     // 🔥 Upload API
     @PostMapping("/profile")
-    public ResponseEntity<Map<String, String>> uploadProfile(
-            @RequestParam("file") MultipartFile file
-    ) {
-        Map<String, String> result = cloudinaryService.uploadImage(file);
+    public ResponseEntity<Map<String, String>> uploadProfile(@RequestParam("file") MultipartFile file, @RequestParam("type") ProfileImageType type) {
+
+        Map<String, String> result = cloudinaryService.uploadProfileImage(file, type);
+
         return ResponseEntity.ok(result);
     }
 

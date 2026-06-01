@@ -34,9 +34,6 @@ public class Member extends TenantAware {
 
     private String fullName;
 
-    @JsonIgnore
-    private String password;
-
     @CreationTimestamp
     private LocalDateTime createdOn;
 
@@ -75,4 +72,8 @@ public class Member extends TenantAware {
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL,orphanRemoval = true)
     private List<TrainerMemberAssignment> trainerAssignments;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true)
+    private GymUser gymUser;
 }

@@ -1,10 +1,7 @@
 package com.gym.Elite.Gym.integration.service;
 
 import com.gym.Elite.Gym.integration.client.IntegrationClient;
-import com.gym.Elite.Gym.integration.dto.IntegrationCardResponse;
-import com.gym.Elite.Gym.integration.dto.IntegrationCatalogResponse;
-import com.gym.Elite.Gym.integration.dto.IntegrationRequest;
-import com.gym.Elite.Gym.integration.dto.IntegrationResponse;
+import com.gym.Elite.Gym.integration.dto.*;
 import com.gym.Elite.Gym.integration.entity.IntegrationRef;
 import com.gym.Elite.Gym.integration.entity.IntegrationStatus;
 import com.gym.Elite.Gym.integration.entity.IntegrationType;
@@ -107,5 +104,39 @@ public class IntegrationService {
         log.info("Fetching integration details. tenant={}, service={}", tenantId, integrationType);
 
         return integrationClient.getDetails(integrationType);
+    }
+
+    public IntegrationValidationResponse validateIntegration(IntegrationValidationRequest request) {
+
+        UUID tenantId = SecurityUtils.getCurrentTenantId();
+
+        request.setTenantId(tenantId);
+
+        log.info("Validating integration: tenantId={}, type={}", tenantId, request.getIntegrationType());
+
+        try {
+
+            IntegrationValidationResponse response = integrationClient.validate(request);
+
+            log.info("Integration validation successful: tenantId={}, type={}, success={}", tenantId, request.getIntegrationType(), response.isSuccess());
+
+            return response;
+
+        } catch (Exception ex) {
+
+            log.error(
+                    "Integration validation failed: tenantId={}, type={}, error={}",
+                    tenantId,
+                    request.getIntegrationType(),
+                    ex.getMessage(),
+                    ex
+            );
+
+            return IntegrationValidationResponse
+                    .builder()
+                    .success(false)
+                    .message("Validation failed: " + ex.getMessage())
+                    .build();
+        }
     }
 }

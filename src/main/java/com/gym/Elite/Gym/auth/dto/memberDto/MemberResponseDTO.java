@@ -17,8 +17,12 @@ public class MemberResponseDTO {
     private UUID id;
     private String name;        // fullName → name
     private String email;
+    private String profileImg;
+    private String phoneName;
     private String plan;        // NEW (can be default or from membership)
-    private String status;      // Active / Inactive (derived)
+    private String accountStatus;
+    private String membershipStatus;
+    private String paymentStatus;
     private LocalDateTime joinDate;    // formatted date (UI-ready)
 }
 

@@ -22,6 +22,7 @@ public class MemberDetailResponseDTO {
     private String email;
     private String phoneNumber;
     private String address;
+    private String status;
 
     private String profileImageUrl;
 

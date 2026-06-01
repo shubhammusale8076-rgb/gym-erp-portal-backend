@@ -68,39 +68,39 @@ public class IntegrationEventClient {
         });
     }
 
-    @Scheduled(fixedDelay = 60000) // Retry every minute
-    public void retryFailedEvents() {
-        List<EventOutbox> failedEvents = outboxRepo.findByStatus("FAILED");
-        if (failedEvents.isEmpty()) return;
-
-        log.info("Retrying {} failed events", failedEvents.size());
-        for (EventOutbox event : failedEvents) {
-            if (event.getRetryCount() >= 5) {
-                log.error("Max retries reached for event {}", event.getEventId());
-                continue;
-            }
-
-            try {
-                Object payload = objectMapper.readValue(event.getPayload(), Object.class);
-
-                EventRequest request = EventRequest.builder()
-                        .eventId(event.getEventId())
-                        .eventType(event.getEventType())
-                        .tenantId(event.getTenantId())
-                        .payload(payload)
-                        .build();
-
-                restTemplate.postForEntity(integrationServiceUrl, request, String.class);
-
-                event.setStatus("SENT");
-                event.setProcessedAt(LocalDateTime.now());
-                outboxRepo.save(event);
-
-            } catch (Exception e) {
-                event.setRetryCount(event.getRetryCount() + 1);
-                outboxRepo.save(event);
-                log.error("Retry failed for event {}: {}", event.getEventId(), e.getMessage());
-            }
-        }
-    }
+//    @Scheduled(fixedDelay = 60000) // Retry every minute
+//    public void retryFailedEvents() {
+//        List<EventOutbox> failedEvents = outboxRepo.findByStatus("FAILED");
+//        if (failedEvents.isEmpty()) return;
+//
+//        log.info("Retrying {} failed events", failedEvents.size());
+//        for (EventOutbox event : failedEvents) {
+//            if (event.getRetryCount() >= 5) {
+//                log.error("Max retries reached for event {}", event.getEventId());
+//                continue;
+//            }
+//
+//            try {
+//                Object payload = objectMapper.readValue(event.getPayload(), Object.class);
+//
+//                EventRequest request = EventRequest.builder()
+//                        .eventId(event.getEventId())
+//                        .eventType(event.getEventType())
+//                        .tenantId(event.getTenantId())
+//                        .payload(payload)
+//                        .build();
+//
+//                restTemplate.postForEntity(integrationServiceUrl, request, String.class);
+//
+//                event.setStatus("SENT");
+//                event.setProcessedAt(LocalDateTime.now());
+//                outboxRepo.save(event);
+//
+//            } catch (Exception e) {
+//                event.setRetryCount(event.getRetryCount() + 1);
+//                outboxRepo.save(event);
+//                log.error("Retry failed for event {}: {}", event.getEventId(), e.getMessage());
+//            }
+//        }
+//    }
 }

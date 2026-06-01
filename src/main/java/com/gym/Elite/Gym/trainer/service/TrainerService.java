@@ -1,8 +1,11 @@
 package com.gym.Elite.Gym.trainer.service;
 
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
+import com.gym.Elite.Gym.auth.entity.GymUser;
 import com.gym.Elite.Gym.auth.entity.Member;
+import com.gym.Elite.Gym.auth.repo.GymUserRepo;
 import com.gym.Elite.Gym.auth.repo.MemberRepo;
+import com.gym.Elite.Gym.auth.service.GymUserService;
 import com.gym.Elite.Gym.trainer.dto.*;
 import com.gym.Elite.Gym.trainer.entity.Trainer;
 import com.gym.Elite.Gym.trainer.entity.TrainerAvailability;
@@ -11,6 +14,7 @@ import com.gym.Elite.Gym.trainer.mapper.TrainerMapper;
 import com.gym.Elite.Gym.trainer.repo.TrainerAvailabilityRepo;
 import com.gym.Elite.Gym.trainer.repo.TrainerMemberAssignmentRepo;
 import com.gym.Elite.Gym.trainer.repo.TrainerRepo;
+import com.gym.Elite.Gym.utility.PasswordGenerator;
 import com.gym.Elite.Gym.utility.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,9 +36,30 @@ public class TrainerService {
     private final TrainerMapper trainerMapper;
     private final TrainerAvailabilityRepo availabilityRepo;
     private final TrainerMemberAssignmentRepo memberAssignmentRepo;
+    private final GymUserService gymUserService;
+    private final GymUserRepo gymUserRepo;
 
     // ✅ CREATE
     public ResponseDto createTrainer(UUID tenantId, TrainerRequestDTO request) {
+
+
+        String email = request.getEmail().trim().toLowerCase();
+
+        if (gymUserRepo.existsByEmailAndTenantId(email, tenantId)) {
+            throw new RuntimeException("A login account already exists for this email");
+        }
+
+        String generatedPassword = PasswordGenerator.generateStrongPassword();
+
+        GymUser gymUser = gymUserService.createGymUser(
+                email,
+                generatedPassword,
+                tenantId,
+                "TRAINER",
+                request.getFullName(),
+                request.getPhoneNumber(),
+                true
+        );
 
         Trainer trainer = Trainer.builder()
                 .fullName(request.getFullName())
@@ -44,6 +69,7 @@ public class TrainerService {
 
                 // Website
                 .bio(request.getBio())
+                .aboutTrainer(request.getAboutTrainer())
                 .profileImageUrl(request.getProfileImageUrl())
                 .skills(request.getSkills())
                 .certifications(request.getCertifications())
@@ -59,10 +85,11 @@ public class TrainerService {
                 .active(true)
 
                 .tenantId(tenantId)
+                .gymUser(gymUser)
                 .build();
 
         // ✅ SAVE TRAINER FIRST
-        trainerRepo.save(trainer);
+       Trainer savedTrainer =  trainerRepo.save(trainer);
 
         // ✅ HANDLE AVAILABILITY
         if (request.getAvailability() != null && !request.getAvailability().isEmpty()) {
@@ -86,6 +113,8 @@ public class TrainerService {
         return ResponseDto.builder()
                 .code(201)
                 .message("Trainer Created Successfully")
+                .id(savedTrainer.getId())
+                .password(generatedPassword)
                 .build();
     }
 

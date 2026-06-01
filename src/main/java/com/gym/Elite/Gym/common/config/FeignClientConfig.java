@@ -42,9 +42,20 @@ public class FeignClientConfig {
                 );
             }
 
+            // =====================================
+            // CORRELATION ID
+            // =====================================
+            String correlationId = org.slf4j.MDC.get("correlationId");
+            if (correlationId == null || correlationId.isEmpty()) {
+                correlationId = java.util.UUID.randomUUID().toString();
+            }
+            requestTemplate.header("X-Correlation-ID", correlationId);
+            requestTemplate.header("X-Correlation-Id", correlationId);
+
             log.info(
-                    "Feign request headers added for tenant: {}",
-                    tenantId
+                    "Feign request headers added for tenant: {} with correlation ID: {}",
+                    tenantId,
+                    correlationId
             );
         };
     }

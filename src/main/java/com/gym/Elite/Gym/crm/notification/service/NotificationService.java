@@ -8,6 +8,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -17,7 +19,7 @@ public class NotificationService {
 
     @Async("notificationExecutor")
     @Transactional
-    public void createNotification(Long userId, String title, String message, Notification.NotificationType type, Long tenantId) {
+    public void createNotification(UUID userId, String title, String message, Notification.NotificationType type, java.util.UUID tenantId) {
         log.info("Creating notification for user: {} - {}", userId, title);
         
         Notification notification = Notification.builder()

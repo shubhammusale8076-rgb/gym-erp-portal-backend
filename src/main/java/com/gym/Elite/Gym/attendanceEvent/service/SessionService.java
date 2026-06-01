@@ -10,6 +10,7 @@ import com.gym.Elite.Gym.attendanceEvent.repo.SessionRepo;
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
 import com.gym.Elite.Gym.auth.entity.Member;
 import com.gym.Elite.Gym.auth.repo.MemberRepo;
+import com.gym.Elite.Gym.integration.entity.IntegrationType;
 import com.gym.Elite.Gym.tenants.repo.TenantRefRepository;
 import com.gym.Elite.Gym.integration.client.EventPublisher;
 import com.gym.Elite.Gym.utility.SecurityUtils;
@@ -116,7 +117,7 @@ public class SessionService {
 
         bookingRepo.save(booking);
 
-        eventPublisher.publish("BOOKING_CREATED", session.getTenantId().toString(), booking);
+        eventPublisher.publish("BOOKING_CREATED", session.getTenantId().toString(), booking, IntegrationType.GOOGLE);
 
         return ResponseDto.builder().code(201).message("Session Booked").build();
     }

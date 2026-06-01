@@ -5,6 +5,9 @@ import com.gym.Elite.Gym.auth.entity.Member;
 import com.gym.Elite.Gym.auth.repo.MemberRepo;
 import com.gym.Elite.Gym.auth.service.SubscriptionService;
 import com.gym.Elite.Gym.integration.client.EventPublisher;
+import com.gym.Elite.Gym.integration.client.IntegrationPaymentClient;
+import com.gym.Elite.Gym.integration.entity.IntegrationType;
+import com.gym.Elite.Gym.payment.dto.PaymentAccessResponse;
 import com.gym.Elite.Gym.payment.dto.PaymentRequestDTO;
 import com.gym.Elite.Gym.payment.dto.PaymentResponseDTO;
 import com.gym.Elite.Gym.payment.entity.Payment;
@@ -36,6 +39,7 @@ public class PaymentService {
     private final PaymentMapper paymentMapper;
     private final SubscriptionService subscriptionService;
     private final EventPublisher eventPublisher;
+    private final IntegrationPaymentClient integrationPaymentClient;
 
     public ResponseDto createPayment(PaymentRequestDTO request) {
 
@@ -78,32 +82,13 @@ public class PaymentService {
 
         Payment savedPayment = paymentRepo.save(payment);
 
-        eventPublisher.publish("PAYMENT_INITIATED", currentTenantId.toString(), savedPayment);
+        eventPublisher.publish("PAYMENT_INITIATED", currentTenantId.toString(), savedPayment, IntegrationType.RAZORPAY);
 
         return ResponseDto.builder()
                 .code(201)
                 .message("Payment Record Created Successfully")
                 .id(savedPayment.getId())
                 .build();
-    }
-
-    public void confirmPayment(UUID paymentId, String transactionReference) {
-        Payment payment = getEntity(paymentId);
-
-        if (PaymentStatus.SUCCESS.equals(payment.getStatus())) {
-            log.info("Payment {} already confirmed", paymentId);
-            return;
-        }
-
-        payment.setStatus(PaymentStatus.SUCCESS);
-        payment.setTransactionReference(transactionReference);
-        payment.setPaymentDate(LocalDateTime.now());
-        paymentRepo.save(payment);
-
-        handleSubscriptionAfterPayment(payment);
-
-        // tenantId is now a plain String — no entity traversal needed
-        eventPublisher.publish("PAYMENT_SUCCESS", payment.getTenantId().toString(), payment);
     }
 
     public PaymentResponseDTO getPaymentById(UUID paymentId) {
@@ -133,6 +118,11 @@ public class PaymentService {
     private Payment getEntity(UUID id) {
         return paymentRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Payment not found"));
+    }
+
+    public PaymentAccessResponse getPayment(String token) {
+
+        return integrationPaymentClient.getPaymentAccess(token);
     }
 
     private void handleSubscriptionAfterPayment(Payment payment) {

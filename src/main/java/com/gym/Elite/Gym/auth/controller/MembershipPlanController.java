@@ -4,6 +4,7 @@ import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
 import com.gym.Elite.Gym.auth.dto.membershipPlanDto.MemberShipPlanDto;
 import com.gym.Elite.Gym.auth.dto.membershipPlanDto.MembershipPlanRequestDTO;
 import com.gym.Elite.Gym.auth.dto.membershipPlanDto.MembershipPlanResponseDTO;
+import com.gym.Elite.Gym.auth.dto.membershipPlanDto.PlanComparisonResponseDto;
 import com.gym.Elite.Gym.auth.service.MembershipPlanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -39,12 +40,16 @@ public class MembershipPlanController {
         return ResponseEntity.ok(planService.getPlansListByTenant());
     }
 
-
-
     @GetMapping("/get-plan/{planId}")
     public ResponseEntity<MembershipPlanResponseDTO> getPlan(@PathVariable UUID planId) {
 
         return ResponseEntity.ok(planService.getPlanById(planId));
+    }
+
+    @GetMapping("/comparison")
+    public PlanComparisonResponseDto getComparison() {
+
+        return planService.getComparison();
     }
 
 

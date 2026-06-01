@@ -31,8 +31,14 @@ public class WorkflowEngine {
         log.info("Processing automation for event: {} (LeadId: {}, CorrelationId: {})", 
                  event.getClass().getSimpleName(), event.getLeadId(), event.getCorrelationId());
 
+        AutomationWorkflow.TriggerType triggerType = mapEventToTriggerType(event);
+        if (triggerType == null) {
+            log.warn("No trigger type mapped for event: {}", event.getClass().getSimpleName());
+            return;
+        }
+
         List<AutomationWorkflow> workflows = workflowRepository.findByTriggerTypeAndEnabledAndTenantId(
-                AutomationWorkflow.TriggerType.valueOf(event.getClass().getSimpleName().replace("Event", "").toUpperCase()),
+                triggerType,
                 true,
                 event.getTenantId()
         );
@@ -80,5 +86,17 @@ public class WorkflowEngine {
                 
             // Add other actions...
         }
+    }
+
+    private AutomationWorkflow.TriggerType mapEventToTriggerType(BaseCrmEvent event) {
+        String eventName = event.getClass().getSimpleName();
+        return switch (eventName) {
+            case "LeadCreatedEvent" -> AutomationWorkflow.TriggerType.LEAD_CREATED;
+            case "LeadAssignedEvent" -> AutomationWorkflow.TriggerType.LEAD_ASSIGNED;
+            case "LeadFollowUpOverdueEvent" -> AutomationWorkflow.TriggerType.FOLLOW_UP_OVERDUE;
+            case "LeadTrialScheduledEvent" -> AutomationWorkflow.TriggerType.TRIAL_SCHEDULED;
+            case "LeadConvertedEvent" -> AutomationWorkflow.TriggerType.LEAD_CONVERTED;
+            default -> null;
+        };
     }
 }

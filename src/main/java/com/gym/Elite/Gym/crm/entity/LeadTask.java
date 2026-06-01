@@ -1,5 +1,7 @@
 package com.gym.Elite.Gym.crm.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.gym.Elite.Gym.auth.entity.GymUser;
 import com.gym.Elite.Gym.common.entity.TenantAware;
 import jakarta.persistence.*;
 import lombok.*;
@@ -42,8 +44,10 @@ public class LeadTask extends TenantAware {
     @Column(name = "due_date")
     private LocalDate dueDate;
 
-    @Column(name = "assigned_to")
-    private UUID assignedTo;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_to")
+    @JsonIgnore
+    private GymUser assignedTo;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

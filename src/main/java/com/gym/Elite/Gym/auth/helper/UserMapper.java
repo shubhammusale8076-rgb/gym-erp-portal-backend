@@ -1,17 +1,14 @@
 package com.gym.Elite.Gym.auth.helper;
 
-
 import com.gym.Elite.Gym.auth.dto.userDtos.UserDetailsDto;
 import com.gym.Elite.Gym.auth.dto.userDtos.UserListDto;
-import com.gym.Elite.Gym.auth.entity.User;
-import org.springframework.security.core.GrantedAuthority;
+import com.gym.Elite.Gym.auth.entity.GymUser;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UserMapper {
 
-    public UserDetailsDto toDto(User user) {
-
+    public UserDetailsDto toDto(GymUser user) {
         return UserDetailsDto.builder()
                 .fullName(user.getFullName())
                 .email(user.getEmail())
@@ -19,15 +16,14 @@ public class UserMapper {
                 .phoneNumber(user.getPhoneNumber())
                 .enabled(user.isEnabled())
                 .authority(
-                        user.getAuthority() != null
-                                ?  user.getAuthority().getRoleCode()
+                        user.getRole() != null
+                                ? user.getRole().getRoleCode()
                                 : null
                 )
                 .build();
     }
 
-    public UserListDto toListDto(User user) {
-
+    public UserListDto toListDto(GymUser user) {
         return UserListDto.builder()
                 .id(user.getId())
                 .fullName(user.getFullName())
@@ -35,8 +31,8 @@ public class UserMapper {
                 .phoneNumber(user.getPhoneNumber())
                 .enabled(user.isEnabled())
                 .authority(
-                        user.getAuthority() != null
-                                ? "ROLE_" + user.getAuthority().getRoleCode()
+                        user.getRole() != null
+                                ? "ROLE_" + user.getRole().getRoleCode()
                                 : null
                 )
                 .creationDate(user.getCreatedOn())

@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -93,15 +94,50 @@ public class SubscriptionService {
                 .findByIdAndTenantId(memberId, tenantId)
                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
-        MemberSubscription currentSubscription = subscriptionPlanRepo.findActiveSubscription(tenantId, memberId).orElseThrow(() ->
-                        new RuntimeException("No active subscription found"));
+        Optional<MemberSubscription> activeSubscriptionOptional = subscriptionPlanRepo.findActiveSubscription(tenantId, memberId);
 
         List<MemberSubscription> history = subscriptionPlanRepo.findSubscriptionHistory(tenantId,memberId);
 
-        Long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), currentSubscription.getEndDate());
+        CurrentSubscriptionDto currentSubscriptionDto = null;
+
+        String code = "ACTIVE_SUBSCRIPTION_FOUND";
+        String message = "Subscription fetched successfully";
+
+        if (activeSubscriptionOptional.isPresent()) {
+
+            MemberSubscription currentSubscription = activeSubscriptionOptional.get();
+
+            Long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), currentSubscription.getEndDate());
+
+            // Prevent negative values if subscription already expired
+            if (remainingDays < 0) {
+                remainingDays = 0L;
+            }
+
+            currentSubscriptionDto = CurrentSubscriptionDto.builder()
+                    .id(currentSubscription.getId().toString())
+                    .planName(currentSubscription.getPlan().getName())
+                    .status(currentSubscription.getStatus().name())
+                    .startDate(currentSubscription.getStartDate().toString())
+                    .endDate(currentSubscription.getEndDate().toString())
+                    .remainingDays(remainingDays)
+                    .duration(currentSubscription.getPlan().getDurationInDays() + " Months")
+                    .paymentStatus("Paid")
+                    .autoRenew(currentSubscription.getAutoRenew())
+                    .build();
+
+        } else {
+
+            code = "NO_ACTIVE_SUBSCRIPTION";
+            message = "Member does not have an active subscription";
+        }
+
 
         return SubscriptionResponseDTO.builder()
 
+                .success(true)
+                .code(code)
+                .message(message)
                 .member(
                         MemberDto.builder()
                                 .id(member.getId())
@@ -112,19 +148,7 @@ public class SubscriptionService {
                                 .build()
                 )
 
-                .currentSubscription(
-                        CurrentSubscriptionDto.builder()
-                                .id(currentSubscription.getId().toString())
-                                .planName(currentSubscription.getPlan().getName())
-                                .status(currentSubscription.getStatus().name())
-                                .startDate(currentSubscription.getStartDate().toString())
-                                .endDate(currentSubscription.getEndDate().toString())
-                                .remainingDays(remainingDays)
-                                .duration(currentSubscription.getPlan().getDurationInDays() + " Months")
-                                .paymentStatus("Paid")
-                                .autoRenew(currentSubscription.getAutoRenew())
-                                .build()
-                )
+                .currentSubscription(currentSubscriptionDto)
 
                 .loyalty(
                         LoyaltyDto.builder()
@@ -330,7 +354,7 @@ public class SubscriptionService {
                         .orElseThrow(() -> new RuntimeException("Subscription not found"));
 
         if (subscription.getStatus() != SubscriptionStatus.ACTIVE) {
-            throw new RuntimeException("Only active memberships can be frozen");
+            throw new RuntimeException("Subscription already frozen");
         }
 
         long freezeDays = ChronoUnit.DAYS.between(request.getFreezeStartDate(), request.getFreezeEndDate());
@@ -345,6 +369,34 @@ public class SubscriptionService {
 
         // extend membership end date
         subscription.setEndDate(subscription.getEndDate().plusDays(freezeDays));
+
+        subscriptionPlanRepo.save(subscription);
+
+        return ResponseDto.builder()
+                .message("Membership frozen successfully")
+                .code(200)
+                .build();
+    }
+
+    public ResponseDto unfreezeSubscription(UUID subscriptionId, UnfreezeSubscriptionRequest request) {
+
+        UUID tenantId = SecurityUtils.getCurrentTenantId();
+
+        MemberSubscription subscription = subscriptionPlanRepo.findByIdAndTenantId(subscriptionId, tenantId)
+                .orElseThrow(() -> new RuntimeException("Subscription not found"));
+
+        if (!Boolean.TRUE.equals(subscription.getFrozen())) {
+            throw new RuntimeException("Subscription is not frozen");
+        }
+
+        subscription.setFrozen(false);
+
+        subscription.setStatus(SubscriptionStatus.ACTIVE);
+
+        subscription.setActualUnfreezeDate(LocalDateTime.now());
+
+        subscription.setFreezeEndDate(LocalDateTime.now());
+        subscription.setUnFreezingReason(request.getReason());
 
         subscriptionPlanRepo.save(subscription);
 

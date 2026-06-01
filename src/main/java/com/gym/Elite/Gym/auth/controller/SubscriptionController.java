@@ -61,6 +61,11 @@ public class SubscriptionController {
         return ResponseEntity.ok(subscriptionService.freezeMembership(subscriptionId, request));
     }
 
+    @PostMapping("/{subscriptionId}/unfreeze")
+    public ResponseEntity<ResponseDto> unfreezeSubscription(@PathVariable UUID subscriptionId, @RequestBody UnfreezeSubscriptionRequest request) {
+        return ResponseEntity.ok(subscriptionService.unfreezeSubscription(subscriptionId, request));
+    }
+
     @PostMapping("/{subscriptionId}/cancel")
     public ResponseEntity<ResponseDto> cancelMembership(@PathVariable UUID subscriptionId, @RequestBody CancelMembershipRequest request) {
 

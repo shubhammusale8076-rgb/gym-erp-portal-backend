@@ -3,6 +3,7 @@ package com.gym.Elite.Gym.integration.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gym.Elite.Gym.integration.entity.EventOutbox;
+import com.gym.Elite.Gym.integration.entity.IntegrationType;
 import com.gym.Elite.Gym.integration.repo.EventOutboxRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ public class EventPublisher {
     private ObjectMapper objectMapper;
 
     @Transactional
-    public void publish(String eventType, String tenantId, Object data) {
+    public void publish(String eventType, String tenantId, Object data  , IntegrationType integrationType) {
         String eventId = UUID.randomUUID().toString();
 
         try {
@@ -38,6 +39,7 @@ public class EventPublisher {
                     .eventType(eventType)
                     .tenantId(tenantId)
                     .payload(jsonPayload)
+                    .integrationType(integrationType)
                     .status("PENDING")
                     .build();
 

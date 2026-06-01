@@ -1,9 +1,6 @@
 package com.gym.Elite.Gym.integration.controller;
 
-import com.gym.Elite.Gym.integration.dto.IntegrationCardResponse;
-import com.gym.Elite.Gym.integration.dto.IntegrationCatalogResponse;
-import com.gym.Elite.Gym.integration.dto.IntegrationRequest;
-import com.gym.Elite.Gym.integration.dto.IntegrationResponse;
+import com.gym.Elite.Gym.integration.dto.*;
 import com.gym.Elite.Gym.integration.entity.IntegrationRef;
 import com.gym.Elite.Gym.integration.entity.IntegrationType;
 import com.gym.Elite.Gym.integration.service.IntegrationService;
@@ -29,6 +26,14 @@ public class IntegrationController {
     @PostMapping("/connect")
     public ResponseEntity<IntegrationResponse> connect(@RequestBody IntegrationRequest request) {
         return ResponseEntity.ok(integrationService.connectIntegration(request));
+
+    }
+
+    @PostMapping("/validate")
+    public ResponseEntity<IntegrationValidationResponse> validate(@RequestBody IntegrationValidationRequest request) {
+
+        IntegrationValidationResponse response = integrationService.validateIntegration(request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/disconnect")

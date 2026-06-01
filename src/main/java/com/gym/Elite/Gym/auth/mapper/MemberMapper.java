@@ -26,18 +26,24 @@ public class MemberMapper {
 
         String plan = null;
         String status = null;
+        String paymentStatus = null;
 
         if (sub != null) {
             plan = sub.getPlan() != null ? sub.getPlan().getName() : null;
             status = sub.getStatus() != null ? sub.getStatus().name() : null;
+            paymentStatus = sub.getPayment() != null ?sub.getPayment().getStatus().name() : null;
         }
 
         return MemberResponseDTO.builder()
                 .id(member.getId())
                 .name(member.getFullName())
                 .email(member.getEmail())
+                .profileImg(member.getProfileImageUrl())
+                .phoneName(member.getPhoneNumber())
                 .plan(plan)
-                .status(String.valueOf(member.getActive()))
+                .accountStatus(String.valueOf(member.getActive()))
+                .membershipStatus(status)
+                .paymentStatus(paymentStatus)
                 .joinDate(member.getCreatedOn())
                 .build();
     }

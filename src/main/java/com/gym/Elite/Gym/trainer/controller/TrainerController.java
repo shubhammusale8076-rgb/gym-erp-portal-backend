@@ -20,7 +20,6 @@ import java.util.UUID;
 public class TrainerController {
 
     private final TrainerService trainerService;
-    private final TrainerAttendanceService attendanceService;
     private final TrainerLeaveService leaveService;
 
     // ✅ CREATE (Admin - CRM / Website Management)

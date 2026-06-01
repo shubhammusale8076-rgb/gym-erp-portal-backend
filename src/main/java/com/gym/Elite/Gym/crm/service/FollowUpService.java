@@ -1,5 +1,6 @@
 package com.gym.Elite.Gym.crm.service;
 
+import com.gym.Elite.Gym.auth.entity.GymUser;
 import com.gym.Elite.Gym.crm.dto.FollowUpCreateRequest;
 import com.gym.Elite.Gym.crm.dto.FollowUpResponseDto;
 import com.gym.Elite.Gym.crm.entity.FollowUp;
@@ -51,7 +52,7 @@ public class FollowUpService {
                 .remarks(request.getRemarks())
                 .completed(false)
                 .overdue(false)
-                .assignedTo(request.getAssignedTo())
+                .assignedTo(request.getAssignedTo() != null ? GymUser.builder().id(request.getAssignedTo()).build() : null)
                 .build();
 
         followUp = followUpRepository.save(followUp);
@@ -137,7 +138,7 @@ public class FollowUpService {
                 .remarks(f.getRemarks())
                 .completed(f.getCompleted())
                 .overdue(f.getOverdue())
-                .assignedTo(f.getAssignedTo())
+                .assignedTo(f.getAssignedTo() != null ? f.getAssignedTo().getId() : null)
                 .createdAt(f.getCreatedAt())
                 .build();
     }

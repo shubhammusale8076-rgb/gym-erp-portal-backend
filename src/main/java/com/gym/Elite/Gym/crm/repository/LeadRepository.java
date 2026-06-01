@@ -1,5 +1,6 @@
 package com.gym.Elite.Gym.crm.repository;
 
+import com.gym.Elite.Gym.auth.entity.GymUser;
 import com.gym.Elite.Gym.crm.entity.Lead;
 import com.gym.Elite.Gym.crm.enums.LeadPriority;
 import com.gym.Elite.Gym.crm.enums.LeadSource;

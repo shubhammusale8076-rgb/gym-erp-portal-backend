@@ -1,10 +1,7 @@
 package com.gym.Elite.Gym.integration.client;
 
 import com.gym.Elite.Gym.common.config.FeignClientConfig;
-import com.gym.Elite.Gym.integration.dto.IntegrationCardResponse;
-import com.gym.Elite.Gym.integration.dto.IntegrationCatalogResponse;
-import com.gym.Elite.Gym.integration.dto.IntegrationRequest;
-import com.gym.Elite.Gym.integration.dto.IntegrationResponse;
+import com.gym.Elite.Gym.integration.dto.*;
 import com.gym.Elite.Gym.integration.dto.google.GoogleSheetExportRequest;
 import com.gym.Elite.Gym.integration.dto.google.GoogleSheetExportResponse;
 import com.gym.Elite.Gym.integration.entity.IntegrationType;
@@ -27,6 +24,11 @@ public interface IntegrationClient {
             @RequestBody IntegrationRequest request
     );
 
+    @PostMapping("/internal/integrations/validate")
+    IntegrationValidationResponse validate(
+            @RequestBody IntegrationValidationRequest request
+    );
+
     @PostMapping("/internal/integrations/disconnect")
     IntegrationResponse disconnect(
             @RequestBody IntegrationRequest request
@@ -45,4 +47,10 @@ public interface IntegrationClient {
 
     @PostMapping("/internal/google/export-members")
     GoogleSheetExportResponse exportMembersToGoogleSheets(@RequestBody GoogleSheetExportRequest request);
+
+    @PostMapping("/internal/payments/create-link")
+    PaymentLinkResponse createPaymentLink(
+            @RequestHeader("X-Correlation-Id") String correlationId,
+            @RequestBody PaymentLinkRequest request
+    );
 }

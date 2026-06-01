@@ -1,5 +1,7 @@
 package com.gym.Elite.Gym.crm.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.gym.Elite.Gym.auth.entity.GymUser;
 import com.gym.Elite.Gym.common.entity.TenantAware;
 import com.gym.Elite.Gym.crm.enums.FollowUpStatus;
 import com.gym.Elite.Gym.crm.enums.FollowUpType;
@@ -57,8 +59,10 @@ public class FollowUp extends TenantAware {
     @Builder.Default
     private Boolean overdue = false;
 
-    @Column(name = "assigned_to")
-    private UUID assignedTo;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_to")
+    @JsonIgnore
+    private GymUser assignedTo;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

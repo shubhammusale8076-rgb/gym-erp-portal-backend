@@ -11,8 +11,6 @@ import java.util.List;
 @Getter
 @Setter
 @SuperBuilder
-@NoArgsConstructor
-@AllArgsConstructor
 public class CalendarBookingRequestedEvent extends BaseCrmEvent {
     private String title;
     private String description;

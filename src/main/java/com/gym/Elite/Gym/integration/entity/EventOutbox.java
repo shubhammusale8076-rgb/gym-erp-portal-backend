@@ -28,6 +28,10 @@ public class EventOutbox {
     @Column(columnDefinition = "TEXT")
     private String payload;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private IntegrationType integrationType;
+
     private String status; // PENDING, SENT, FAILED
 
     @Builder.Default
@@ -35,6 +39,11 @@ public class EventOutbox {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    private LocalDateTime nextRetryAt;
+
+    @Column(columnDefinition = "TEXT")
+    private String lastError;
 
     private LocalDateTime processedAt;
 }

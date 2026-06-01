@@ -9,7 +9,5 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @SuperBuilder
-@NoArgsConstructor
-@AllArgsConstructor
 public class LeadConvertedEvent extends BaseCrmEvent {
 }

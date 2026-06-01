@@ -17,4 +17,5 @@ public class MemberShipPlanDto {
     private String name;
     private double price;
     private String period;
+    private Boolean popular;
 }

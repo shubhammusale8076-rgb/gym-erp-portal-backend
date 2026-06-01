@@ -19,6 +19,6 @@ public class AssignmentController {
     @GetMapping("/{leadId}")
     public ResponseEntity<List<LeadAssignmentHistory>> getLeadAssignmentHistory(@PathVariable UUID leadId) {
         UUID tenantId = SecurityUtils.getCurrentTenantId();
-        return ResponseEntity.ok(historyRepository.findByLeadIdAndTenantIdOrderByCreatedAtDesc(leadId, tenantId));
+        return ResponseEntity.ok(historyRepository.findByLeadIdAndTenantIdOrderByChangedAtDesc(leadId, tenantId));
     }
 }

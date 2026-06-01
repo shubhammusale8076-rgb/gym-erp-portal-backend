@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -15,8 +17,22 @@ import java.util.UUID;
 public class AuthorityResponseDto {
 
     private UUID id;
+
     private String roleCode;
+
     private String roleDescription;
-    private Long userCount; // 👈 NEW FIELD
+
+    private Boolean systemRole;
+
+    private Boolean defaultRole;
+
+    private Long userCount;
+
+    private String riskLevel;
+
+    private List<PermissionDto> permissions;
+
+    private List<RoleUserDto> assignedUsers;
+
 }
 

@@ -43,7 +43,7 @@ public class OverdueFollowUpScheduler {
         log.info("CRM Scheduler: Running overdue follow-up check at {}", now);
 
         // Fetch all pending (not yet marked overdue) follow-ups past their scheduled time
-        List<FollowUp> overdueFollowUps = followUpRepository.findAllPendingOverdue(now);
+        List<FollowUp> overdueFollowUps = followUpRepository.findAllPendingOverdueGlobal(now);
 
         if (overdueFollowUps.isEmpty()) {
             log.debug("CRM Scheduler: No overdue follow-ups found.");

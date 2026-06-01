@@ -46,11 +46,19 @@ public class MemberSubscription {
     @UpdateTimestamp
     private LocalDateTime updatedOn;
 
+    private Boolean frozen = false;
+
+    private LocalDateTime actualUnfreezeDate;
+
     private LocalDateTime freezeStartDate;
 
     private LocalDateTime freezeEndDate;
 
-    private Integer totalFreezeDays;
+    private Integer totalFreezeDays = 0;
+
+    private String freezingReason;
+
+    private String unFreezingReason;
 
     private String cancellationReason;
 
