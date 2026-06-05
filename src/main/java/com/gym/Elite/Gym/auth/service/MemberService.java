@@ -122,7 +122,7 @@ public class MemberService {
         return MemberCreationResponseDto.builder()
                 .memberId(member.getId())
                 .fullName(member.getFullName())
-                .userName(member.getFullName())
+                .userName(member.getEmail())
                 .role(member.getGymUser().getRole().getRoleCode())
                 .temporaryPassword(generatedPassword)
                 .paymentLink(paymentResponse.getUniversalPaymentLink())
@@ -143,11 +143,27 @@ public class MemberService {
 
         Integer attendanceCount = attendanceRepo.countByActorIdAndActorType(memberId, AttendanceActorType.MEMBER);
 
+        UUID id = member.getTrainerAssignments() != null
+                ? member.getTrainerAssignments().stream()
+                .filter(a -> Boolean.TRUE.equals(a.getActive()))
+                .findFirst()
+                .map(a -> a.getTrainer().getId())
+                .orElse(null)
+                : null;
+
         String trainerName = member.getTrainerAssignments() != null
                 ? member.getTrainerAssignments().stream()
                 .filter(a -> Boolean.TRUE.equals(a.getActive()))
                 .findFirst()
                 .map(a -> a.getTrainer().getFullName())
+                .orElse("Self")
+                : "Self";
+
+        String email = member.getTrainerAssignments() != null
+                ? member.getTrainerAssignments().stream()
+                .filter(a -> Boolean.TRUE.equals(a.getActive()))
+                .findFirst()
+                .map(a -> a.getTrainer().getEmail())
                 .orElse("Self")
                 : "Self";
 
@@ -230,9 +246,11 @@ public class MemberService {
                 .build();
 
         TrainerMemberDTO trainerMemberDTO = TrainerMemberDTO.builder()
+                .id(id)
                 .fullName(trainerName)
+                .email(email)
                 .programName(programName)
-                        .build();
+                .build();
 
         return MemberDetailResponseDTO.builder()
                 .memberId(member.getId())
