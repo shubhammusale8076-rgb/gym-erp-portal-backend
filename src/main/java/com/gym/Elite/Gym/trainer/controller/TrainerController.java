@@ -2,7 +2,6 @@ package com.gym.Elite.Gym.trainer.controller;
 
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
 import com.gym.Elite.Gym.trainer.dto.*;
-import com.gym.Elite.Gym.trainer.service.TrainerAttendanceService;
 import com.gym.Elite.Gym.trainer.service.TrainerLeaveService;
 import com.gym.Elite.Gym.trainer.service.TrainerService;
 import com.gym.Elite.Gym.utility.SecurityUtils;

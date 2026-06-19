@@ -1,4 +1,4 @@
-package com.gym.Elite.Gym.attendanceEvent.entity;
+package com.gym.Elite.Gym.attendanceEvent.enums;
 
 public enum SessionStatus {
     UPCOMING,

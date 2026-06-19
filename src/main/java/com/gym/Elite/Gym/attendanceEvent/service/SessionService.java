@@ -4,7 +4,7 @@ import com.gym.Elite.Gym.attendanceEvent.dto.CreateSessionDTO;
 import com.gym.Elite.Gym.attendanceEvent.dto.SessionBookingDTO;
 import com.gym.Elite.Gym.attendanceEvent.entity.Session;
 import com.gym.Elite.Gym.attendanceEvent.entity.SessionBooking;
-import com.gym.Elite.Gym.attendanceEvent.entity.SessionStatus;
+import com.gym.Elite.Gym.attendanceEvent.enums.SessionStatus;
 import com.gym.Elite.Gym.attendanceEvent.repo.SessionBookingRepo;
 import com.gym.Elite.Gym.attendanceEvent.repo.SessionRepo;
 import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;

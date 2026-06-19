@@ -25,4 +25,18 @@ public interface MemberRepo extends JpaRepository<Member, UUID> {
     WHERE m.tenantId = :tenantId
 """)
     List<Member> findAllWithSubscriptions(UUID tenantId);
+
+    @Query("""
+    SELECT DISTINCT m
+    FROM Member m
+    LEFT JOIN FETCH m.subscriptions s
+    LEFT JOIN FETCH s.plan
+    WHERE m.tenantId = :tenantId
+    AND (
+        LOWER(m.fullName) LIKE LOWER(CONCAT('%', :query, '%'))
+        OR LOWER(m.phoneNumber) LIKE LOWER(CONCAT('%', :query, '%'))
+    )
+   
+""")
+    List<Member> searchAttendanceMembers(UUID tenantId, String query);
 }

@@ -1,6 +1,9 @@
 package com.gym.Elite.Gym.attendanceEvent.entity;
 
+import com.gym.Elite.Gym.attendanceEvent.enums.AttendanceSource;
+import com.gym.Elite.Gym.attendanceEvent.enums.DeviceStatus;
 import com.gym.Elite.Gym.attendanceEvent.enums.DeviceType;
+import com.gym.Elite.Gym.attendanceEvent.enums.DeviceVendor;
 import com.gym.Elite.Gym.common.entity.TenantAware;
 import jakarta.persistence.*;
 import lombok.*;
@@ -49,6 +52,9 @@ public class AttendanceDevice extends TenantAware {
 
     private String manufacturer;
 
+    @Enumerated(EnumType.STRING)
+    private AttendanceSource source;
+
     private String model;
 
     private String ipAddress;
@@ -60,14 +66,22 @@ public class AttendanceDevice extends TenantAware {
     private Boolean active = true;
 
     @Enumerated(EnumType.STRING)
+    private DeviceStatus status;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DeviceType deviceType;
+
+    @Enumerated(EnumType.STRING)
+    private DeviceVendor vendor;
 
     /** API key sent by device in Authorization header; stored hashed in production */
     @Column(columnDefinition = "TEXT")
     private String apiKey;
 
     private LocalDateTime lastSyncAt;
+
+    private LocalDateTime lastHeartbeat;
 
     @CreationTimestamp
     @Column(updatable = false)

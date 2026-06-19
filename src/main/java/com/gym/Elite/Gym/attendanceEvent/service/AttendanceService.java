@@ -14,6 +14,10 @@ import com.gym.Elite.Gym.attendanceEvent.resolver.ResolverFactory;
 import com.gym.Elite.Gym.attendanceEvent.resolver.ResolvedActor;
 import com.gym.Elite.Gym.attendanceEvent.validator.AttendanceValidationStrategy;
 import com.gym.Elite.Gym.attendanceEvent.validator.ValidationStrategyFactory;
+import com.gym.Elite.Gym.auth.entity.Member;
+import com.gym.Elite.Gym.auth.repo.MemberRepo;
+import com.gym.Elite.Gym.trainer.entity.Trainer;
+import com.gym.Elite.Gym.trainer.repo.TrainerRepo;
 import com.gym.Elite.Gym.utility.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -41,8 +47,8 @@ public class AttendanceService {
 
     private final AttendanceRepo attendanceRepo;
     private final AttendanceAuditRepository auditRepo;
-    private final AttendanceMapper attendanceMapper;
-    
+    private final MemberRepo memberRepo;
+    private final TrainerRepo trainerRepo;
     private final ResolverFactory resolverFactory;
     private final ValidationStrategyFactory validationFactory;
 
@@ -50,7 +56,7 @@ public class AttendanceService {
      * Entry point for device-driven attendance (Biometric, RFID, QR).
      */
     @Transactional
-    public AttendanceEventResponseDto recordDeviceEvent(AttendanceEventDto event) {
+    public AttendanceEventResponseDto recordAttendanceEvent(AttendanceEventDto event) {
         UUID tenantId = SecurityUtils.getCurrentTenantId();
         
         // 1. Resolve Actor
@@ -112,35 +118,81 @@ public class AttendanceService {
         }
     }
 
+    @Transactional
+    public List<AttendanceActorSearchDto> searchActors(String query) {
+
+        UUID tenantId = SecurityUtils.getCurrentTenantId();
+
+        List<AttendanceActorSearchDto> results = new ArrayList<>();
+
+        log.info("Searching attendance actors. TenantId={}, Query={}",
+                tenantId, query);
+
+        List<Member> members = memberRepo.searchAttendanceMembers(tenantId, query);
+
+        log.info("Members found={}", members.size());
+
+        List<Trainer> trainers = trainerRepo.searchAttendanceTrainers(tenantId, query);
+
+        log.info("Trainers found={}", trainers.size());
+
+        members.forEach(member ->
+                results.add(
+                        AttendanceActorSearchDto.builder()
+                                .id(member.getId())
+                                .name(member.getFullName())
+                                .actorType(AttendanceActorType.MEMBER)
+                                .phone(member.getPhoneNumber())
+                                .active(member.getActive())
+                                .membershipPlan(getMembershipPlan(member))
+                                .build()
+                ));
+
+        trainers.forEach(trainer ->
+                results.add(
+                        AttendanceActorSearchDto.builder()
+                                .id(trainer.getId())
+                                .name(trainer.getFullName())
+                                .actorType(AttendanceActorType.TRAINER)
+                                .phone(trainer.getPhoneNumber())
+                                .active(trainer.getActive())
+                                .membershipPlan("Trainer")
+                                .build()
+                ));
+
+        return results;
+    }
+
     /**
      * Manual check-in via dashboard.
      */
-    @Transactional
-    public AttendanceResponse manualCheckIn(ManualAttendanceRequest request) {
-        UUID tenantId = SecurityUtils.getCurrentTenantId();
-        
-        AttendanceActorResolver resolver = resolverFactory.getResolver(request.getActorType());
-        ResolvedActor actor = resolver.resolveById(tenantId, request.getActorId())
-                .orElseThrow(() -> new AttendanceException("Actor not found: " + request.getActorId()));
-
-        // Validate
-        AttendanceValidationStrategy validator = validationFactory.getStrategy(request.getActorType());
-        AttendanceEventDto eventDto = AttendanceEventDto.builder()
-                .actorId(request.getActorId())
-                .actorType(request.getActorType())
-                .source(request.getSource())
-                .notes(request.getNotes())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        ValidationResult validation = validator.validate(tenantId, actor.getId(), eventDto);
-        if (!validation.isValid()) {
-            throw new AttendanceException(validation.getFailureReason());
-        }
-
-        Attendance attendance = processCheckIn(tenantId, actor, eventDto);
-        return attendanceMapper.toResponse(attendance, actor.getName());
-    }
+//    @Transactional
+//    public AttendanceResponse manualCheckIn(ManualAttendanceRequest request) {
+//        UUID tenantId = SecurityUtils.getCurrentTenantId();
+//
+//        AttendanceActorResolver resolver = resolverFactory.getResolver(request.getActorType());
+//        ResolvedActor actor = resolver.resolveById(tenantId, request.getActorId())
+//                .orElseThrow(() -> new AttendanceException("Actor not found: " + request.getActorId()));
+//
+//        // Validate
+//        AttendanceValidationStrategy validator = validationFactory.getStrategy(request.getActorType());
+//
+//        AttendanceEventDto eventDto = AttendanceEventDto.builder()
+//                .actorId(request.getActorId())
+//                .actorType(request.getActorType())
+//                .source(request.getSource())
+//                .notes(request.getNotes())
+//                .timestamp(LocalDateTime.now())
+//                .build();
+//
+//        ValidationResult validation = validator.validate(tenantId, actor.getId(), eventDto);
+//        if (!validation.isValid()) {
+//            throw new AttendanceException(validation.getFailureReason());
+//        }
+//
+//        Attendance attendance = processCheckIn(tenantId, actor, eventDto);
+//        return attendanceMapper.toResponse(attendance, actor.getName());
+//    }
 
     private ResolvedActor resolveActor(UUID tenantId, AttendanceEventDto event) {
         AttendanceActorResolver resolver = resolverFactory.getResolver(event.getActorType());
@@ -207,5 +259,23 @@ public class AttendanceService {
                 .modifiedBy("SYSTEM")
                 .build();
         auditRepo.save(audit);
+    }
+
+    private String getMembershipPlan(Member member) {
+
+        if (member.getSubscriptions() == null || member.getSubscriptions().isEmpty()) {
+            return "No Active Plan";
+        }
+
+        return member.getSubscriptions()
+                .stream()
+                .filter(sub ->
+                        Boolean.TRUE.equals(sub.getActive()))
+                .filter(sub ->
+                        sub.getPlan() != null)
+                .map(sub ->
+                        sub.getPlan().getName())
+                .findFirst()
+                .orElse("No Active Plan");
     }
 }

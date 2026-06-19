@@ -35,6 +35,8 @@ public class AttendanceEventDto {
     /** Device UUID registered in attendance_devices table */
     private UUID deviceId;
 
+    private String deviceCode;
+
     /** When the physical event occurred on the device */
     private LocalDateTime timestamp;
 

@@ -1,5 +1,6 @@
 package com.gym.Elite.Gym.attendanceEvent.entity;
 
+import com.gym.Elite.Gym.attendanceEvent.enums.SessionStatus;
 import com.gym.Elite.Gym.common.entity.TenantAware;
 import jakarta.persistence.*;
 import lombok.*;

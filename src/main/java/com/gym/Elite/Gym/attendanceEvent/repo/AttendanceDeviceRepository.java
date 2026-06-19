@@ -23,4 +23,6 @@ public interface AttendanceDeviceRepository extends JpaRepository<AttendanceDevi
     Optional<AttendanceDevice> findByDeviceCodeAndTenantId(String deviceCode, UUID tenantId);
 
     boolean existsByDeviceCodeAndTenantId(String deviceCode, UUID tenantId);
+
+    Optional<AttendanceDevice> findByTenantIdAndActiveTrue(UUID tenantId);
 }

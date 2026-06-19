@@ -1,14 +1,17 @@
 package com.gym.Elite.Gym.attendanceEvent.controller;
 
-import com.gym.Elite.Gym.attendanceEvent.dto.AttendanceResponse;
-import com.gym.Elite.Gym.attendanceEvent.dto.ManualAttendanceRequest;
+import com.gym.Elite.Gym.attendanceEvent.dto.*;
 import com.gym.Elite.Gym.attendanceEvent.enums.AttendanceActorType;
+import com.gym.Elite.Gym.attendanceEvent.enums.AttendanceSource;
 import com.gym.Elite.Gym.attendanceEvent.service.AttendanceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -26,29 +29,28 @@ public class AttendanceController {
      * Manual check-in for any actor type (Member, Trainer, Staff).
      */
     @PostMapping("/manual")
-    public ResponseEntity<AttendanceResponse> manualCheckIn(@Valid @RequestBody ManualAttendanceRequest request) {
-        return ResponseEntity.ok(attendanceService.manualCheckIn(request));
+    public ResponseEntity<AttendanceEventResponseDto> manualCheckIn(@Valid @RequestBody ManualAttendanceRequest request) {
+
+        AttendanceEventDto eventDto = AttendanceEventDto.builder()
+                .actorId(request.getActorId())
+                .actorType(request.getActorType())
+                .source(AttendanceSource.MANUAL)
+                .timestamp(LocalDateTime.now())
+                .notes(request.getNotes())
+                .build();
+        AttendanceEventResponseDto response = attendanceService.recordAttendanceEvent(eventDto);
+
+        return ResponseEntity.ok(response);
     }
 
-    /**
-     * Legacy convenience endpoint for member check-in.
-     */
-    @PostMapping("/member/{memberId}")
-    public ResponseEntity<AttendanceResponse> memberCheckIn(@PathVariable UUID memberId) {
-        ManualAttendanceRequest request = new ManualAttendanceRequest();
-        request.setActorId(memberId);
-        request.setActorType(AttendanceActorType.MEMBER);
-        return ResponseEntity.ok(attendanceService.manualCheckIn(request));
+
+    @GetMapping("/search")
+    public ResponseEntity<List<AttendanceActorSearchDto>> searchActors(@RequestParam String query) {
+
+       List<AttendanceActorSearchDto> list =  attendanceService.searchActors(query);
+
+       return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
-    /**
-     * Legacy convenience endpoint for trainer check-in.
-     */
-    @PostMapping("/trainer/{trainerId}")
-    public ResponseEntity<AttendanceResponse> trainerCheckIn(@PathVariable UUID trainerId) {
-        ManualAttendanceRequest request = new ManualAttendanceRequest();
-        request.setActorId(trainerId);
-        request.setActorType(AttendanceActorType.TRAINER);
-        return ResponseEntity.ok(attendanceService.manualCheckIn(request));
-    }
+
 }

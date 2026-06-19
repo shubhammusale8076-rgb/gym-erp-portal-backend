@@ -1,6 +1,7 @@
 package com.gym.Elite.Gym.attendanceEvent.dto;
 
 import com.gym.Elite.Gym.attendanceEvent.enums.DeviceType;
+import com.gym.Elite.Gym.attendanceEvent.enums.DeviceVendor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,10 +23,8 @@ public class DeviceResponse {
     private UUID id;
     private String deviceName;
     private String deviceCode;
-    private String manufacturer;
+    private DeviceVendor vendor;
     private String model;
-    private String ipAddress;
-    private Integer port;
     private Boolean active;
     private DeviceType deviceType;
     private LocalDateTime lastSyncAt;

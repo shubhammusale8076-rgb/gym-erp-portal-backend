@@ -3,8 +3,10 @@ package com.gym.Elite.Gym.attendanceEvent.controller;
 import com.gym.Elite.Gym.attendanceEvent.dto.DeviceRegistrationRequest;
 import com.gym.Elite.Gym.attendanceEvent.dto.DeviceResponse;
 import com.gym.Elite.Gym.attendanceEvent.service.AttendanceDeviceService;
+import com.gym.Elite.Gym.auth.dto.authDtos.ResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,6 +31,15 @@ public class AttendanceDeviceController {
             @Valid @RequestBody DeviceRegistrationRequest request) {
         return ResponseEntity.ok(deviceService.updateDevice(id, request));
     }
+
+    @PostMapping("/{id}/regenerate-api-key")
+    public ResponseEntity<ResponseDto> updateAPIKey(@PathVariable UUID id){
+
+        ResponseDto responseDto = deviceService.regenerateApiKey(id);
+
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
 
     @GetMapping
     public ResponseEntity<List<DeviceResponse>> getDevices() {
